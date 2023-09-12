@@ -1,0 +1,36 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1 class="text-body-emphasis">
+    Teste Form
+</h1>
+
+{% if sucesso %}
+<p class="alert alert-success">
+    Deu Certo!
+</p>
+{% else %}
+
+<form action="" method="POST" id="form" novalidate>
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    <button type="submit" class="btn btn-primary btn-block">
+        Cadastrar
+    </button>
+
+</form>
+{% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

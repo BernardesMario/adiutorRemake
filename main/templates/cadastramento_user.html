@@ -1,0 +1,109 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Novo Usuário{% endblock %}</title>
+    {% block head %}
+
+    <style>
+
+        .form-group {
+        display: flex;
+        flex-direction: column;
+        align-items: left;
+        justify-content: space-between;
+        margin-bottom: 10px;
+    }
+        .form-input {
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 100px;
+        }
+
+    </style>
+    {% endblock %}
+
+</head>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1 class="text-body-emphasis">
+    Cadastrar Novo Terapeuta
+</h1>
+
+{% if sucesso %}
+<p class="alert alert-success">
+    Deu Certo!
+</p>
+{% else %}
+
+<form action="" method="POST" id="form" novalidate>
+    {% csrf_token %}
+    <div class="mb-3 form-container">
+        <h2>Informações do Usuário:</h2>
+        <div class="form-group">
+            {{ user_form.username.label_tag }}
+            {{ user_form.username }}
+            {{ user_form.username.help_text }}
+        </div>
+
+        <div class="form-group">
+            {{ user_form.email.label_tag }}
+            {{ user_form.email }}
+        </div>
+
+        <div class="form-group">
+            {{ user_form.password1.label_tag }}
+            {{ user_form.password1 }}
+            {{ user_form.password1.help_text }}
+        </div>
+
+        <div class="form-group">
+            {{ user_form.password2.label_tag }}
+            {{ user_form.password2 }}
+        </div>
+    </div>
+    <div class="mb-3 form-container">
+        <h2>Informações Pessoais: </h2>
+        <div class="form-group">
+            {{ terapeuta_form.nome.label_tag }}
+            {{ terapeuta_form.nome }}
+        </div>
+
+        <div class="form-group">
+            {{ terapeuta_form.conselho_codigo.label_tag }}
+            {{ terapeuta_form.conselho_codigo }}
+        </div>
+
+        <div class="form-group">
+            {{ terapeuta_form.unimed_codigo.label_tag }}
+            {{ terapeuta_form.unimed_codigo }}
+        </div>
+
+        <div class="form-group">
+            {{ terapeuta_form.email.label_tag }}
+            {{ terapeuta_form.email }}
+        </div>
+
+        <div class="form-group">
+            {{ terapeuta_form.telefone_numero.label_tag }}
+            {{ terapeuta_form.telefone_numero }}
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">
+        Cadastrar
+    </button>
+</form>
+{% endif %}
+{% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

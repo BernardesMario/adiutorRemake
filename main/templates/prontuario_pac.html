@@ -1,0 +1,31 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<body>
+<div class="page-container">
+    {% block content %}
+    <h1>Prontuário de </h1>
+    <h2>{{ paciente.nome }}</h2>
+    {% csrf_token %}
+
+    <ul>
+        {% for prontuario in prontuarios %}
+            <li>
+                {{ prontuario.data_consulta }} - {{ prontuario.autor }} <br>
+                {{ prontuario.entrada }}
+            </li>
+        {% empty %}
+            <li>Nenhuma entrada encontrada neste prontuário.</li>
+        {% endfor %}
+    </ul>
+    {% endblock %}
+</div>
+
+<footer class="footer">
+    criado por Mário P. Bernardes, 2023
+</footer>
+</body>
+</html>

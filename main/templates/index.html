@@ -1,0 +1,33 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1>Bem Vindo {{ request.user.username }} </h1>
+    <p> <a href="{% url 'main:perfil' %}"> Informações Pessoais </a></p>
+    {% csrf_token %}
+
+    <ul>
+        {% for paciente in pacientes %}
+            <li>
+                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                <a href="{% url 'main:add_entrada' prontuario_numero=paciente.prontuario_numero %}"> Nova Entrada </a>
+                <a href="{% url 'main:prontuario' prontuario_numero=paciente.prontuario_numero %}"> Ver Histórico </a>
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>
