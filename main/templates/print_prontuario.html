@@ -1,0 +1,16 @@
+{% block content %}
+<h1>Prontuário de {{ paciente.nome }}</h1>
+
+<ul>
+    {% for prontuario in prontuarios %}
+        <li>
+            <strong>Data da Consulta:</strong> {{ prontuario.data_consulta }}<br>
+            <strong>Autor:</strong> {{ prontuario.autor }}<br>
+            <strong>Entrada:</strong><br>
+            {{ prontuario.entrada }}
+        </li>
+    {% empty %}
+        <li>Nenhuma entrada encontrada neste prontuário.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

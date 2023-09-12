@@ -1,0 +1,33 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1> Paciente: {{ paciente.nome }} <br>
+     Prontuário nº: {{ paciente.prontuario_numero }}
+</h1>
+    <ul>
+            <li>
+                Data de Nascimento: {{ paciente.nascimento}} ( {{ idade }} ) <br>
+                Responsável Legal: {{ paciente.responsavel_legal }} <br>
+                Contato: {{ paciente.telefone_numero }} <br>
+                         {{ paciente.email }} <br>
+                Observações: {{ paciente.observacoes }}
+
+
+
+            </li>
+    </ul>
+{% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

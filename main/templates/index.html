@@ -4,6 +4,10 @@
 
 <!DOCTYPE html>
 <html>
+<head>
+        <title>{% block title %} Indice {% endblock %}</title>
+
+</head>
 <body>
 <div class="page-container">
 
@@ -18,6 +22,10 @@
                 {{ paciente.nome }} - {{ paciente.prontuario_numero }}
                 <a href="{% url 'main:add_entrada' prontuario_numero=paciente.prontuario_numero %}"> Nova Entrada </a>
                 <a href="{% url 'main:prontuario' prontuario_numero=paciente.prontuario_numero %}"> Ver Histórico </a>
+                <a href="{% url 'main:transferencia' prontuario_numero=paciente.prontuario_numero %}"> Transferir </a>
+                <a href="{% url 'main:desligamento' prontuario_numero=paciente.prontuario_numero %}"> Desligar </a>
+                <a href="{% url 'main:dadospac' prontuario_numero=paciente.prontuario_numero %}"> Detalhes </a>
+
             </li>
         {% empty %}
             <li>No entries found.</li>

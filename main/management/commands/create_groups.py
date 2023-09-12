@@ -57,7 +57,13 @@ class Command(BaseCommand):
                 'permission_codename': 'transfer_pac',
                 'permission_name': 'Transferir Paciente (Terapeutas)',
             },
-            # Add future permissions here
+            {
+                'content_type_name': 'main',
+                'model_name': 'conveniosaceitos',
+                'permission_codename': 'add_convenio',
+                'permission_name': 'Adicionar Novo Convenio (Administrativos)',
+            },
+            # Adiciona aqui novas permissões
         ]
 
         try:

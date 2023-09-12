@@ -65,10 +65,17 @@ class UserRegistrationForm(UserCreationForm):
 
 
 class PacienteDesligamentoForm(forms.ModelForm):
-    model = CadastroPacientes
-    fields = ['desligado', 'data_final']
+    class Meta:
+        model = CadastroPacientes
+        fields = ['desligado', 'data_final']
 
 
 class PacienteTransferenciaForm(forms.ModelForm):
-    model = CadastroPacientes
-    fields = ['terapeuta_id']
+    novo_terapeuta = forms.ModelChoiceField(
+        queryset=CadastroProfissionais.objects.all(),
+        label='Novo Terapeuta',
+        required=True
+    )
+    class Meta:
+        model = CadastroPacientes
+        fields = ['novo_terapeuta']

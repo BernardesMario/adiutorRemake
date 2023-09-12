@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>{% block title %}Novo Paciente{% endblock %}</title>
+    <title>{% block title %}Nova Entrada{% endblock %}</title>
 
     {% block head %}
 
@@ -30,12 +30,12 @@
 
 {% block content %}
 <h1 class="text-body-emphasis">
-    Novo Paciente
+    Registrar Nova Consulta
 </h1>
 
 {% if sucesso %}
 <p class="alert alert-success">
-    Paciente Cadastrado com sucesso!
+    Registrado com Sucesso!
 </p>
 {% else %}
 
@@ -45,7 +45,7 @@
         {% bootstrap_form form %}
     </div>
     <button type="submit" class="btn btn-primary btn-block">
-        Cadastrar
+        Salvar
     </button>
 </form>
 {% endif %}

@@ -8,10 +8,12 @@ class CadastroPacientes(models.Model):
     prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7, unique=True)
     nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa')
     responsavel_legal = models.CharField(verbose_name='Responsável Legal', max_length=100, null=True, blank=True)
+
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
+
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
-    cpf = models.CharField(verbose_name='CPF', max_length=11, unique=True)
+    cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True)
     convenio = models.ForeignKey(
         'ConveniosAceitos',
         related_name='pacientes',
@@ -49,6 +51,9 @@ class ConveniosAceitos(models.Model):
     class Meta:
         verbose_name = 'Convênio'
         verbose_name_plural = 'Convênios'
+        permissions = [
+            ('add_convenio', 'Adicionar Novo Convenio (Administrativos)')
+        ]
 
 
 # Model de cadastro dos profissionais terapeutas

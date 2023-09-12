@@ -4,11 +4,14 @@
 
 <!DOCTYPE html>
 <html>
+<head>
+    <title>{% block title %}Prontuario{% endblock %}</title>
+</head>
 <body>
 <div class="page-container">
     {% block content %}
-    <h1>Prontuário de </h1>
-    <h2>{{ paciente.nome }}</h2>
+    <h1>Prontuário de {{ paciente.nome }} </h1>
+
     {% csrf_token %}
 
     <ul>

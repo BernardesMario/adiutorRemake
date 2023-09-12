@@ -1,0 +1,27 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %} Administração {% endblock %}</title>
+</head>
+<body>
+<div class="page-container">
+
+    {% block content %}
+        <h1>Bem Vindo {{ request.user.username }} </h1>
+
+        <a href="{% url 'main:novo'  %}"> Cadastrar Paciente </a>
+        <a href="{% url 'main:convenio' %}"> Cadastrar Convenio </a>
+        <a href="{% url 'main:usuario' %}"> Cadastrar Terapeuta </a>
+
+    {% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

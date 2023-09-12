@@ -1,0 +1,40 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}Desligamento{% endblock %}</title>
+</head>
+<body>
+    <div class="page-container">
+
+        {% block content %}
+            <h1 class="text-body-emphasis">
+                Desligar Paciente
+            </h1>
+
+            {% if sucesso %}
+                <p class="alert alert-success">
+                    Paciente Desligado com sucesso!
+                </p>
+            {% else %}
+
+                <form action="" method="POST" id="form" novalidate>
+                    {% csrf_token %}
+                    {% bootstrap_form form %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        desligar
+                    </button>
+
+                </form>
+            {% endif %}
+        {% endblock %}
+    </div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>
