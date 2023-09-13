@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
-# Model de cadastro dos Pacientes
 class CadastroPacientes(models.Model):
     nome = models.CharField(verbose_name='Nome do Paciente', max_length=100)
     prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7, unique=True)
@@ -41,7 +40,7 @@ class CadastroPacientes(models.Model):
             ('deslig_pac', 'Desligar Paciente (Terapeutas)')
         ]
 
-# Model de cadastro de convênios aceitos
+
 class ConveniosAceitos(models.Model):
     nome = models.CharField(verbose_name='Convênio', max_length=50)
 
@@ -56,7 +55,6 @@ class ConveniosAceitos(models.Model):
         ]
 
 
-# Model de cadastro dos profissionais terapeutas
 class CadastroProfissionais(models.Model):
     nome = models.CharField(verbose_name='Nome', max_length=100, unique=True, editable=True)
     conselho_codigo = models.CharField(verbose_name='CRP', max_length=5, unique=True, editable=True)
@@ -80,7 +78,6 @@ class CadastroProfissionais(models.Model):
         ]
 
 
-# Model para armazenamento dos Prontuários
 class Prontuarios(models.Model):
     numero = models.ForeignKey(
         'CadastroPacientes',

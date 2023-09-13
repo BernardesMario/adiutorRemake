@@ -94,5 +94,6 @@ class Command(BaseCommand):
         except Exception as e:
             self.stderr.write(self.style.ERROR(f'Ocorreu um erro: {e}'))
 
+
 if __name__ == "__main__":
     Command().handle()

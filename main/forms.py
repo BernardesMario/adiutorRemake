@@ -76,6 +76,7 @@ class PacienteTransferenciaForm(forms.ModelForm):
         label='Novo Terapeuta',
         required=True
     )
+
     class Meta:
         model = CadastroPacientes
         fields = ['novo_terapeuta']

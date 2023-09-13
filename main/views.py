@@ -14,23 +14,23 @@ from .models import CadastroPacientes, CadastroProfissionais, Prontuarios
 # TODO:
 # view de listagem de consultas/mes
 # opção de impressão de prontuario
-#
+# upload de imagens/arquivos - linkar com prontuário
+# pagamentos
+# prontuario grupo (uma entrada > varios membros)
+# model-pac: modalidade(grupo/indiv/casal)
 
 
 @login_required
 def cadastrar_paciente(request):
-    """
-    View para cadastramento de novos pacientes.
-    """
     sucesso = False
-    form = CadastroPacienteForm(request.POST or None)
+    cadastro_form = CadastroPacienteForm(request.POST or None)
 
-    if form.is_valid():
+    if cadastro_form.is_valid():
         sucesso = True
-        form.save()
+        cadastro_form.save()
 
     context = {
-        'form': form,
+        'form': cadastro_form,
         'sucesso': sucesso,
     }
 
@@ -39,13 +39,7 @@ def cadastrar_paciente(request):
 
 @login_required
 def index(request):
-    """
-    View para a página inicial de profissionais terapeutas.
-    Exibe os pacientes relacionados ao Terapeuta logado.
-    """
-    # Obtem o terapeuta através do relacionamento User-Terapeuta
     current_user_terapeuta = request.user.Terapeutas.get()
-    # Obter todos os pacientes do usuario logado para exibição na página
     current_terapeuta_pacientes = CadastroPacientes.objects.filter(terapeuta_id=current_user_terapeuta)
 
     context = {
@@ -57,13 +51,7 @@ def index(request):
 
 @login_required
 def list_entradas(request, prontuario_numero):
-    """
-    View para exibição dos prontuários.
-    Recebe o numero do prontuario através da URL.
-    """
-    # Identifica o terapeuta logado através do relacionamento User-Terapeuta
     current_user_terapeuta = request.user.Terapeutas.get()
-    # Identifica o paciente selecionado e localiza seu prontuário
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     current_paciente_prontuario = Prontuarios.objects.filter(numero_id=prontuario_numero)
 
@@ -79,40 +67,35 @@ def list_entradas(request, prontuario_numero):
 @login_required
 @permission_required('main.add_entry', raise_exception=True)
 def add_entrada(request, prontuario_numero):
-    """
-    View para adicionar entradas a um prontuário.
-    Recebe o número do prontuário através da URL.
-    View exclusiva para usuários do grupo 'Terapeutas', que possui a
-    autorização 'add_entry' para adicionar entradas.
-    """
-    # Definindo 'paciente' com o número recebido da URL
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
+
     # Data da última entrada feita no prontuário do paciente
     ultima_entrada = Prontuarios.objects.filter(numero=prontuario_numero).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
-    form = EntradaProntuario(initial={'numero': prontuario_numero})
+
+    entrada_form = EntradaProntuario(initial={'numero': prontuario_numero})
     sucesso = False
 
     if request.method == 'POST':
-        form = EntradaProntuario(request.POST)
+        entrada_form = EntradaProntuario(request.POST)
 
-        if form.is_valid():
-            data_nova_entrada = form.cleaned_data['data_consulta']
-            # Validação que a data da consulta não é anterior a última registrada
+        if entrada_form.is_valid():
+            data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+
             if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
-                form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
+                entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
 
-            if not form.errors:
+            if not entrada_form.errors:
                 sucesso = True
-                new_entry = form.save(commit=False)
+                new_entry = entrada_form.save(commit=False)
                 new_entry.numero = paciente
-                # Designar usuário atual como autor da entrada automaticamente
+
                 new_entry.autor = current_user_terapeuta
                 new_entry.save()
 
     context = {
-        'form': form,
+        'form': entrada_form,
         'sucesso': sucesso,
     }
 
@@ -122,15 +105,9 @@ def add_entrada(request, prontuario_numero):
 @login_required()
 @permission_required('main.deslig_pac', raise_exception=True)
 def desligar_paciente(request, prontuario_numero):
-    """
-    View para registrar desligamento de pacientes [Mudança do valor booleano ´Desligado para True].
-    Recebe o número do prontuário através da URL.
-    View exclusiva para usuários do grupo 'Terapeutas', que possui a
-    autorização 'deslig_pac' para desligar pacientes.
-    """
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     desligamento_form = PacienteDesligamentoForm()
-    # Data da última entrada feita no prontuário do paciente
+
     ultima_entrada = Prontuarios.objects.filter(numero=prontuario_numero).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
     sucesso = False
@@ -163,12 +140,6 @@ def desligar_paciente(request, prontuario_numero):
 @login_required()
 @permission_required('main.transfer_pac', raise_exception=True)
 def transferir_paciente(request, prontuario_numero):
-    """
-    View para transferencia de um paciente para outro terapeuta.
-    Função recebe o número do prontuário através da URL.
-    View exclusiva para usuários do grupo 'Terapeutas', que possui a
-    autorização 'transfer_pac' para transferir pacientes.
-    """
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     transfer_form = PacienteTransferenciaForm()
     sucesso = False
@@ -197,12 +168,6 @@ def redirect_page(request):
 @login_required()
 @permission_required('main.add_terapeuta', raise_exception=True)
 def cadastro_user(request):
-    """
-    View para adicionar novos usuarios terapeutas.
-    View exclusiva para usuarios do grupo 'Administrativos'
-    que possui a permissão 'main.add_tarapeuta' para adicionar
-    novos terapeutas.
-    """
     user_form = UserRegistrationForm()
     terapeuta_form = CadastroProfissionaisForm
     terapeutas_group = Group.objects.get(name='Terapeutas')
@@ -238,27 +203,23 @@ def cadastro_user(request):
 
 @login_required
 def informacoes_terapeuta(request):
-    """
-    View para atualizar as informações pessoais
-    de usuários do grupo 'Terapeutas'.
-    """
     current_user_id = request.user.id
-    form = CadastroProfissionaisForm
+    perfil_form = CadastroProfissionaisForm
     sucesso = False
 
     if request.method == 'POST':
-        form = CadastroProfissionaisForm(request.POST)
+        perfil_form = CadastroProfissionaisForm(request.POST)
 
-        if form.is_valid():
+        if perfil_form.is_valid():
             sucesso = True
-            new_terapeuta = form.save(commit=False)
+            new_terapeuta = perfil_form.save(commit=False)
 
             # Garante que o usuário atual faça modificações em seu próprio cadastro
             new_terapeuta.usuario_codigo_id = current_user_id
             new_terapeuta.save()
 
     context = {
-        'form': CadastroProfissionaisForm,
+        'form': perfil_form,
         'sucesso': sucesso,
     }
     return render(request, 'user_perfil.html', context)
@@ -273,16 +234,11 @@ def admin_interface(request):
 
 
 def usuario_login(request):
-    """
-    View de login.
-    Redireciona o usuário para a página devida
-    através do grupo a qual pertence.
-    """
     if request.method == 'POST':
-        form = AuthenticationForm(request, request.POST)
+        login_form = AuthenticationForm(request, request.POST)
 
-        if form.is_valid():
-            current_user = form.get_user()
+        if login_form.is_valid():
+            current_user = login_form.get_user()
             user_login(request, current_user)
 
             # Definindo os IDs dos grupos de Usuario(Administrativo/Terapeuta)
@@ -302,10 +258,10 @@ def usuario_login(request):
                 error_message = "Algo deu errado! Entre em contato com a administração!\nErro: Grupo Inválido"
                 return HttpResponseForbidden(error_message)
     else:
-        form = AuthenticationForm()
+        login_form = AuthenticationForm()
 
     context = {
-        'form': form
+        'form': login_form
     }
     return render(request, 'login.html', context)
 
@@ -313,24 +269,18 @@ def usuario_login(request):
 @login_required()
 @permission_required('main.add_convenio', raise_exception=True)
 def novo_convenio(request):
-    """
-    View para cadastramento de novos Conveios.
-    Exclusiva para usuários do grupo 'Administrativos'
-    que possui a autorização 'main.add_convenio' para
-    adicionar convenios.
-    """
     sucesso = False
-    form = CadastrarConvenios
+    convenio_form = CadastrarConvenios
 
     if request.method == 'POST':
-        form = CadastrarConvenios(request.POST)
+        convenio_form = CadastrarConvenios(request.POST)
 
-        if form.is_valid():
-            form.save()
+        if convenio_form.is_valid():
+            convenio_form.save()
             sucesso = True
 
     context = {
-        'form': form,
+        'form': convenio_form,
         'sucesso': sucesso
     }
 
@@ -338,9 +288,6 @@ def novo_convenio(request):
 
 
 def detalhes_paciente(request, prontuario_numero):
-    """
-    View para exibir detalhes de um paciente
-    """
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     nascimento = current_paciente.nascimento
     hoje = date.today()
