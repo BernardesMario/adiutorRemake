@@ -17,8 +17,6 @@ from .models import CadastroPacientes, CadastroProfissionais, Prontuarios
 # upload de imagens/arquivos - linkar com prontuário
 # pagamentos
 # prontuario grupo (uma entrada > varios membros)
-# model-pac: modalidade(grupo/indiv/casal)
-
 
 @login_required
 def cadastrar_paciente(request):
@@ -287,6 +285,7 @@ def novo_convenio(request):
     return render(request, 'add_convenio.html', context)
 
 
+@login_required()
 def detalhes_paciente(request, prontuario_numero):
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     nascimento = current_paciente.nascimento
@@ -298,3 +297,8 @@ def detalhes_paciente(request, prontuario_numero):
         'idade': idade_paciente
     }
     return render(request, 'paciente_details.html', context)
+
+
+@login_required()
+def list_consultas(request):
+    pass

@@ -13,16 +13,31 @@ class CadastroPacientes(models.Model):
 
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
     cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True)
+
+    MOD_CHOICES = (
+        (0, 'Individual'),
+        (1, 'Grupo'),
+        (2, 'Casal'),
+    )
+    modalidade_atendimento = models.IntegerField(verbose_name='Modalidade', choices=MOD_CHOICES)
+    grupo = models.ForeignKey(
+        'CadastroGrupos',
+        related_name='membros',
+        on_delete=models.PROTECT,
+        blank=True,
+        null=True
+    )
     convenio = models.ForeignKey(
         'ConveniosAceitos',
         related_name='pacientes',
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
-    carteirinha_convenio = models.CharField(verbose_name='Número do Convênio', max_length=50, blank=True, null=True)
+    carteirinha_convenio = models.CharField(verbose_name='Número do Convênio',
+                                            max_length=50, blank=True, null=True)
     terapeuta = models.ForeignKey(
         'CadastroProfissionais',
         related_name='pacientes',
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11)
     email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
@@ -39,6 +54,23 @@ class CadastroPacientes(models.Model):
             ('transfer_pac', 'Transferir Paciente (Terapeutas)'),
             ('deslig_pac', 'Desligar Paciente (Terapeutas)')
         ]
+
+
+class CadastroGrupos(models.Model):
+    label = models.CharField(verbose_name='Nome', max_length=100)
+    prontuario_grupo_numero = models.CharField(verbose_name='Nº Prontuário do Grupo', max_length=4)
+    terapeuta_responsavel = models.ForeignKey(
+        'CadastroProfissionais',
+        related_name='grupos',
+        on_delete=models.PROTECT
+    )
+
+    def __str__(self):
+        return f'{self.label} - {self.terapeuta_responsavel}'
+
+    class Meta:
+        verbose_name = 'Grupo'
+        verbose_name_plural = 'Grupos'
 
 
 class ConveniosAceitos(models.Model):
@@ -64,7 +96,7 @@ class CadastroProfissionais(models.Model):
     usuario_codigo = models.ForeignKey(
         User,
         related_name='Terapeutas',
-        on_delete=models.CASCADE
+        on_delete=models.PROTECT
     )
 
     def __str__(self):
@@ -81,14 +113,14 @@ class CadastroProfissionais(models.Model):
 class Prontuarios(models.Model):
     numero = models.ForeignKey(
         'CadastroPacientes',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         to_field='prontuario_numero',
         related_name='paciente',
         verbose_name='Nº de Prontuário'
     )
     autor = models.ForeignKey(
         'CadastroProfissionais',
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         to_field='nome',
         related_name='prontuarios',
         verbose_name='Terapeuta'
