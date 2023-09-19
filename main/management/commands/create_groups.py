@@ -44,7 +44,6 @@ class Command(BaseCommand):
                 'permission_codename': 'add_terapeuta',
                 'permission_name': 'Adicionar novos Usuários (Administrativos)',
             },
-
             {
                 'content_type_name': 'main',
                 'model_name': 'cadastropacientes',
@@ -59,9 +58,33 @@ class Command(BaseCommand):
             },
             {
                 'content_type_name': 'main',
+                'model_name': 'cadastropacientes',
+                'permission_codename': 'add_pac_group',
+                'permission_name': 'Adicionar Paciente a Grupo (Terapeutas)',
+            },
+            {
+                'content_type_name': 'main',
                 'model_name': 'conveniosaceitos',
                 'permission_codename': 'add_convenio',
                 'permission_name': 'Adicionar Novo Convenio (Administrativos)',
+            },
+            {
+                'content_type_name': 'main',
+                'model_name': 'prontuariosgrupos',
+                'permission_codename': 'add_entry_group',
+                'permission_name': 'Adicionar entradas em prontuários de Grupo (Terapeutas)',
+            },
+            {
+                'content_type_name': 'main',
+                'model_name': 'cadastrogrupos',
+                'permission_codename': 'transfer_group',
+                'permission_name': 'Transferir Grupo (Terapeutas)',
+            },
+            {
+                'content_type_name': 'main',
+                'model_name': 'cadastrogrupos',
+                'permission_codename': 'deslig_group',
+                'permission_name': 'Desligar Grupo (Terapeutas)',
             },
             # Adiciona aqui novas permissões
         ]

@@ -52,25 +52,9 @@ class CadastroPacientes(models.Model):
         verbose_name_plural = 'Pacientes'
         permissions = [
             ('transfer_pac', 'Transferir Paciente (Terapeutas)'),
-            ('deslig_pac', 'Desligar Paciente (Terapeutas)')
+            ('deslig_pac', 'Desligar Paciente (Terapeutas)'),
+            ('add_pac_group', 'Adicionar Paciente a Grupo (Terapeutas')
         ]
-
-
-class CadastroGrupos(models.Model):
-    label = models.CharField(verbose_name='Nome', max_length=100)
-    prontuario_grupo_numero = models.CharField(verbose_name='Nº Prontuário do Grupo', max_length=4)
-    terapeuta_responsavel = models.ForeignKey(
-        'CadastroProfissionais',
-        related_name='grupos',
-        on_delete=models.PROTECT
-    )
-
-    def __str__(self):
-        return f'{self.label} - {self.terapeuta_responsavel}'
-
-    class Meta:
-        verbose_name = 'Grupo'
-        verbose_name_plural = 'Grupos'
 
 
 class ConveniosAceitos(models.Model):
@@ -110,6 +94,61 @@ class CadastroProfissionais(models.Model):
         ]
 
 
+class CadastroGrupos(models.Model):
+    label = models.CharField(verbose_name='Nome', max_length=100)
+    prontuario_grupo_numero = models.CharField(verbose_name='Nº Prontuário do Grupo', max_length=5, unique=True)
+    terapeuta_responsavel = models.ForeignKey(
+        'CadastroProfissionais',
+        related_name='grupos',
+        on_delete=models.PROTECT
+    )
+    desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
+    data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
+    data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
+
+    def __str__(self):
+        return f'{self.label} - {self.terapeuta_responsavel}'
+
+    class Meta:
+        verbose_name = 'Grupo'
+        verbose_name_plural = 'Grupos'
+        permissions = [
+            ('transfer_group', 'Transferir Grupo (Terapeutas)'),
+            ('deslig_group', 'Desligar Grupo (Terapeutas)')
+        ]
+
+
+class ProntuariosGrupos(models.Model):
+    numero = models.ForeignKey(
+        'CadastroGrupos',
+        on_delete=models.PROTECT,
+        to_field='prontuario_grupo_numero',
+        related_name='grupo',
+        verbose_name='Nº Prontuário do Grupo'
+    )
+    autor = models.ForeignKey(
+        'CadastroProfissionais',
+        on_delete=models.PROTECT,
+        to_field='nome',
+        related_name='prontuario_grupo',
+        verbose_name='Terapeuta Responsável'
+    )
+    data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
+    data_consulta = models.DateField(verbose_name='Data da Consulta')
+    entrada = models.TextField(verbose_name='Parecer')
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'Prontuário Grupo {self.numero}'
+
+    class Meta:
+        verbose_name = 'Prontuário Grupo'
+        verbose_name_plural = 'Prontuários Grupos'
+        permissions = [
+            ('add_entry_group', 'Adicionar entradas em prontuários de Grupo (Terapeutas)')
+        ]
+
+
 class Prontuarios(models.Model):
     numero = models.ForeignKey(
         'CadastroPacientes',
@@ -131,7 +170,7 @@ class Prontuarios(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return f'Prontuário {self.numero} registrado em {self.data_entrada} por {self.autor}'
+        return f'Prontuário {self.numero}'
 
     class Meta:
         verbose_name = 'Prontuário'

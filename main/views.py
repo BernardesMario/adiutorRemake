@@ -7,8 +7,9 @@ from django.http import HttpResponseForbidden, HttpResponse
 from django.template.loader import render_to_string
 from datetime import date
 from .forms import (UserRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
-                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm)
-from .models import CadastroPacientes, CadastroProfissionais, Prontuarios
+                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
+                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm)
+from .models import CadastroPacientes, CadastroProfissionais, Prontuarios, CadastroGrupos, ProntuariosGrupos
 # Create your views here.
 
 # TODO:
@@ -17,6 +18,7 @@ from .models import CadastroPacientes, CadastroProfissionais, Prontuarios
 # upload de imagens/arquivos - linkar com prontuário
 # pagamentos
 # prontuario grupo (uma entrada > varios membros)
+
 
 @login_required
 def cadastrar_paciente(request):
@@ -36,18 +38,31 @@ def cadastrar_paciente(request):
 
 
 @login_required
+def cadastrar_grupo(request):
+    sucesso = False
+    grupo_form = CadastroGrupoForm
+    pacientes_form = CadastroGrupoForm
+
+    if request.method == 'POST':
+        grupo_form = CadastroGrupoForm(request.POST)
+
+
+@login_required
 def index(request):
     current_user_terapeuta = request.user.Terapeutas.get()
     current_terapeuta_pacientes = CadastroPacientes.objects.filter(terapeuta_id=current_user_terapeuta)
+    current_terapeuta_grupos = CadastroGrupos.objects.filter(terapeuta_responsavel_id=current_user_terapeuta)
 
     context = {
         'current_user': current_user_terapeuta,
         'pacientes': current_terapeuta_pacientes,
+        'grupos': current_terapeuta_grupos,
     }
     return render(request, 'index.html', context)
 
 
 @login_required
+#criar permissão para visualização de prontuario
 def list_entradas(request, prontuario_numero):
     current_user_terapeuta = request.user.Terapeutas.get()
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -98,6 +113,50 @@ def add_entrada(request, prontuario_numero):
     }
 
     return render(request, 'nova_entrada.html', context)
+
+@login_required()
+@permission_required('main.add_entry_group', raise_exception=True)
+def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
+    current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    # current_grupo_prontuario = ProntuariosGrupos.objects.get(numero=current_grupo.prontuario_grupo_numero)
+    current_user_terapeuta = request.user.Terapeutas.get()
+    pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
+
+    ultima_entrada = ProntuariosGrupos.objects.filter(numero=current_grupo.prontuario_grupo_numero).order_b y('-data_consulta').first()
+    ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
+    entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
+
+    sucesso = False
+
+    if entrada_form.is_valid():
+        data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+
+        if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
+            entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
+
+        if not entrada_form.errors:
+            sucesso = True
+            new_entry = entrada_form.save(commit=False)
+            new_entry.numero = current_grupo
+            new_entry.autor = current_user_terapeuta
+            new_entry.save()
+
+    '''if request.method == 'POST':
+        sessao_grupo_form = EntradaProntuarioGrupoForm(request.POST)
+
+        if sessao_grupo_form.is_valid():
+            nova_entrada_grupo = sessao_grupo_form.save(commit=False)
+            nova_entrada_grupo.autor = current_user_terapeuta
+
+            nova_entrada_grupo.numero.add(*pacientes_grupo)
+            sucesso = True
+'''
+    context = {
+        'form': sessao_grupo_form,
+        'sucesso': sucesso,
+    }
+
+    return render(request, 'TEMPLATEPLACEHOLDER', context)
 
 
 @login_required()
