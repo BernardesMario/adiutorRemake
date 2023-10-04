@@ -12,15 +12,8 @@ from .forms import (UserRegistrationForm, CadastroPacienteForm, EntradaProntuari
 from .models import CadastroPacientes, CadastroProfissionais, Prontuarios, CadastroGrupos, ProntuariosGrupos
 # Create your views here.
 
-# TODO:
-# view de listagem de consultas/mes
-# opção de impressão de prontuario
-# upload de imagens/arquivos - linkar com prontuário
-# pagamentos
-# prontuario grupo (uma entrada > varios membros)
 
-
-@login_required
+@login_required(login_url="/main/login")
 def cadastrar_paciente(request):
     sucesso = False
     cadastro_form = CadastroPacienteForm(request.POST or None)
@@ -37,7 +30,7 @@ def cadastrar_paciente(request):
     return render(request, 'cadastramento_pac.html', context)
 
 
-@login_required
+@login_required(login_url="/main/login")
 def cadastrar_grupo(request):
     sucesso = False
     grupo_form = CadastroGrupoForm
@@ -47,7 +40,7 @@ def cadastrar_grupo(request):
         grupo_form = CadastroGrupoForm(request.POST)
 
 
-@login_required
+@login_required(login_url="/main/login")
 def index(request):
     current_user_terapeuta = request.user.Terapeutas.get()
     current_terapeuta_pacientes = CadastroPacientes.objects.filter(terapeuta_id=current_user_terapeuta)
@@ -61,8 +54,9 @@ def index(request):
     return render(request, 'index.html', context)
 
 
-@login_required
-#criar permissão para visualização de prontuario
+
+@login_required(login_url="/main/login")
+# criar permissão para visualização de prontuario
 def list_entradas(request, prontuario_numero):
     current_user_terapeuta = request.user.Terapeutas.get()
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -76,8 +70,22 @@ def list_entradas(request, prontuario_numero):
 
     return render(request, 'prontuario_pac.html', context)
 
+# todo
+# Definir permissões
+@login_required(login_url="/main/login")
+def list_entrada_grupo(request,prontuario_grupo_numero):
+    current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero = prontuario_grupo_numero)
 
-@login_required
+    context = {
+        'current_grupo': current_grupo,
+        'grupo_prontuario': current_grupo_prontuario
+
+    }
+    pass
+
+
+@login_required(login_url="/main/login")
 @permission_required('main.add_entry', raise_exception=True)
 def add_entrada(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -114,15 +122,18 @@ def add_entrada(request, prontuario_numero):
 
     return render(request, 'nova_entrada.html', context)
 
-@login_required()
+
+@login_required(login_url="/main/login")
 @permission_required('main.add_entry_group', raise_exception=True)
 def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    # current_grupo_prontuario = ProntuariosGrupos.objects.get(numero=current_grupo.prontuario_grupo_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
+
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
-    ultima_entrada = ProntuariosGrupos.objects.filter(numero=current_grupo.prontuario_grupo_numero).order_b y('-data_consulta').first()
+    ultima_entrada = ProntuariosGrupos.objects.filter(
+        numero=current_grupo.prontuario_grupo_numero
+    ).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
     entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
 
@@ -141,25 +152,26 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
             new_entry.autor = current_user_terapeuta
             new_entry.save()
 
-    '''if request.method == 'POST':
-        sessao_grupo_form = EntradaProntuarioGrupoForm(request.POST)
+            for paciente in pacientes_grupo:
+                entrada_prontuario_individual = Prontuarios(
+                    numero=paciente,
+                    autor=current_user_terapeuta,
+                    data_consulta=new_entry.data_consulta,
+                    entrada=new_entry.entrada
+                )
+                entrada_prontuario_individual.save()
 
-        if sessao_grupo_form.is_valid():
-            nova_entrada_grupo = sessao_grupo_form.save(commit=False)
-            nova_entrada_grupo.autor = current_user_terapeuta
+            return 'sucess page'
 
-            nova_entrada_grupo.numero.add(*pacientes_grupo)
-            sucesso = True
-'''
     context = {
-        'form': sessao_grupo_form,
+        'form': entrada_form,
         'sucesso': sucesso,
     }
 
     return render(request, 'TEMPLATEPLACEHOLDER', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 @permission_required('main.deslig_pac', raise_exception=True)
 def desligar_paciente(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -194,7 +206,7 @@ def desligar_paciente(request, prontuario_numero):
     return render(request, 'deslig_pac.html', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 @permission_required('main.transfer_pac', raise_exception=True)
 def transferir_paciente(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -222,7 +234,7 @@ def redirect_page(request):
     pass
 
 
-@login_required()
+@login_required(login_url="/main/login")
 @permission_required('main.add_terapeuta', raise_exception=True)
 def cadastro_user(request):
     user_form = UserRegistrationForm()
@@ -258,7 +270,7 @@ def cadastro_user(request):
     return render(request, 'cadastramento_user.html', context)
 
 
-@login_required
+@login_required(login_url="/main/login")
 def informacoes_terapeuta(request):
     current_user_id = request.user.id
     perfil_form = CadastroProfissionaisForm
@@ -282,7 +294,7 @@ def informacoes_terapeuta(request):
     return render(request, 'user_perfil.html', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 def admin_interface(request):
     """
     View para a página inical de usuários do grupo 'Administrativos'.
@@ -323,7 +335,7 @@ def usuario_login(request):
     return render(request, 'login.html', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 @permission_required('main.add_convenio', raise_exception=True)
 def novo_convenio(request):
     sucesso = False
@@ -344,7 +356,7 @@ def novo_convenio(request):
     return render(request, 'add_convenio.html', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 def detalhes_paciente(request, prontuario_numero):
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     nascimento = current_paciente.nascimento
@@ -358,6 +370,6 @@ def detalhes_paciente(request, prontuario_numero):
     return render(request, 'paciente_details.html', context)
 
 
-@login_required()
+@login_required(login_url="/main/login")
 def list_consultas(request):
     pass
