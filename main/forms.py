@@ -92,6 +92,7 @@ class CadastroPacienteNovoForm(forms.ModelForm):
                   'data_inicio', 'carteirinha_convenio', 'telefone_numero',
                   'convenio', 'terapeuta', 'cpf_numero',
                   'modalidade_atendimento', 'grupo', 'email', 'observacoes']
+
         widgets = {
             'nascimento': forms.DateInput(
                 attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}

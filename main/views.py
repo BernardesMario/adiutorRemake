@@ -54,7 +54,6 @@ def index(request):
     return render(request, 'index.html', context)
 
 
-
 @login_required(login_url="/main/login")
 # criar permissão para visualização de prontuario
 def list_entradas(request, prontuario_numero):
@@ -70,12 +69,12 @@ def list_entradas(request, prontuario_numero):
 
     return render(request, 'prontuario_pac.html', context)
 
-# todo
+
 # Definir permissões
 @login_required(login_url="/main/login")
 def list_entrada_grupo(request,prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero = prontuario_grupo_numero)
+    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero=prontuario_grupo_numero)
 
     context = {
         'current_grupo': current_grupo,
@@ -160,8 +159,6 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
                     entrada=new_entry.entrada
                 )
                 entrada_prontuario_individual.save()
-
-            return 'sucess page'
 
     context = {
         'form': entrada_form,
