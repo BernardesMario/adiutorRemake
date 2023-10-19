@@ -102,7 +102,20 @@ class CadastroPacienteNovoForm(forms.ModelForm):
 class CadastroGrupoForm(forms.ModelForm):
     class Meta:
         model = CadastroGrupos
-        fields = '__all__'
+        fields = ['label', 'prontuario_grupo_numero',
+                  'terapeuta_responsavel', 'data_inicio']
+
+    widgets = {
+        'data_inicio': forms.DateInput(
+            attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
+        )}
+
+
+class AdicionarPacGrupoForm(forms.ModelForm):
+    # grupo_numero =
+    class Meta:
+        model = CadastroPacientes
+        fields = ['grupo']
 
 
 class CadastrarConvenios(forms.ModelForm):

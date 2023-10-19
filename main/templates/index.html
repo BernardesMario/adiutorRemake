@@ -38,10 +38,10 @@
             <li>
                 {{ grupo.label }} - {{ grupo.prontuario_grupo_numero }}
                 <a href="{% url 'main:add-entrada-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Nova Entrada </a>
-                <a href="{% url '#main:prontuario' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Ver Histórico </a>
-                <a href="{% url '#main:transferencia' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Transferir </a>
-                <a href="{% url '#main:desligamento' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Desligar </a>
-                <a href="{% url '#main:dadospac' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Detalhes </a>
+                <a href="{% url 'main:grupo-prontuario' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Ver Histórico </a>
+                <a href="{% url 'main:transfer-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Transferir </a>
+                <a href="{% url 'main:deslig-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Desligar </a>
+                <a href="{% url '#main:dados-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Detalhes </a>
 
             </li>
         {% empty %}

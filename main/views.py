@@ -1,6 +1,7 @@
 from django.contrib.auth import login as user_login
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import Group
+from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import permission_required, login_required
 from django.http import HttpResponseForbidden, HttpResponse
@@ -8,7 +9,8 @@ from django.template.loader import render_to_string
 from datetime import date
 from .forms import (UserRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
-                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm)
+                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
+                    AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
 from .models import CadastroPacientes, CadastroProfissionais, Prontuarios, CadastroGrupos, ProntuariosGrupos
 # Create your views here.
 
@@ -32,12 +34,35 @@ def cadastrar_paciente(request):
 
 @login_required(login_url="/main/login")
 def cadastrar_grupo(request):
-    sucesso = False
-    grupo_form = CadastroGrupoForm
-    pacientes_form = CadastroGrupoForm
+    grupo_form = CadastroGrupoForm(request.POST or None)
 
-    if request.method == 'POST':
-        grupo_form = CadastroGrupoForm(request.POST)
+    if grupo_form.is_valid():
+        new_group = grupo_form.save()
+        redirect_url = reverse('add_pacs_grupo', args=[str(new_group.id)])
+        return redirect(redirect_url)
+        # return redirect('/main/add_pac_grp', grupo_id=new_group.id)
+
+    context = {
+        'form': grupo_form,
+    }
+
+    return render(request, 'HTML-PLACEHOLDER', context)
+
+
+@login_required(login_url="/main/login")
+def add_pacs_grupo(request, grupo_id):
+    pacs_form = AdicionarPacGrupoForm
+
+    if request.method == "POST":
+        grupo = grupo_id
+        selected_items = request.POST.getlist('selected_items')
+        CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo)
+
+    context = {
+        'form': pacs_form
+    }
+
+    return render(request, 'HTML-PLACEHOLDER', context)
 
 
 @login_required(login_url="/main/login")
@@ -70,9 +95,26 @@ def list_entradas(request, prontuario_numero):
     return render(request, 'prontuario_pac.html', context)
 
 
+@login_required(login_url="/main/login")
+# Criar permissão para ver prontuarios
+def list_entradas_grupo(request, prontuario_grupo_numero):
+    current_user_terapeuta = request.user.Terapeutas.get()
+    current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_grupo_prontuario = ProntuariosGrupos.objects.get(numero_id=prontuario_grupo_numero)
+
+    context = {
+        'current_user': current_user_terapeuta,
+        'grupo': current_grupo,
+        'prontuarios': current_grupo_prontuario,
+
+    }
+    return render(request, 'prontuario_grupo.html', context)
+
+
+'''
 # Definir permissões
 @login_required(login_url="/main/login")
-def list_entrada_grupo(request,prontuario_grupo_numero):
+def list_entrada_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
     current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero=prontuario_grupo_numero)
 
@@ -81,7 +123,9 @@ def list_entrada_grupo(request,prontuario_grupo_numero):
         'grupo_prontuario': current_grupo_prontuario
 
     }
+    return render(request, 'HTML-PLACHOLDER',  context)
     pass
+    '''
 
 
 @login_required(login_url="/main/login")
@@ -127,6 +171,7 @@ def add_entrada(request, prontuario_numero):
 def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
+    current_grupo_membros = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
@@ -165,7 +210,7 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
         'sucesso': sucesso,
     }
 
-    return render(request, 'TEMPLATEPLACEHOLDER', context)
+    return render(request, 'nova_entrada_grupo.html', context)
 
 
 @login_required(login_url="/main/login")
@@ -204,6 +249,39 @@ def desligar_paciente(request, prontuario_numero):
 
 
 @login_required(login_url="/main/login")
+# definir permissão
+def desligar_grupo(request, prontuario_grupo_numero):
+    grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    desligamento_form = GrupoDesligamentoForm()
+
+    ultima_entrada = ProntuariosGrupos.objects.filter(prontuario_grupo_numero=prontuario_grupo_numero).order_by('-data_consulta').first()
+    ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
+    sucesso = False
+
+    if request.method == 'POST':
+        desligamento_form = GrupoDesligamentoForm(request.POST)
+
+        if desligamento_form.is_valid():
+            data_final = desligamento_form.cleaned_data['data_final']
+
+            if not data_final or (ultima_entrada_data and data_final < ultima_entrada_data):
+                desligamento_form.add_error('data_final',
+                                            'Grupo teve consultas posteriores a data de desligamento informada!')
+
+            if not desligamento_form.errors:
+                grupo.desligado = True
+                grupo.data_final = data_final
+                grupo.save()
+                sucesso = True
+    context = {
+        'form': desligamento_form,
+        'sucesso': sucesso,
+    }
+
+    return render(request, 'deslig_groupo.html', context)
+
+
+@login_required(login_url="/main/login")
 @permission_required('main.transfer_pac', raise_exception=True)
 def transferir_paciente(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
@@ -227,13 +305,33 @@ def transferir_paciente(request, prontuario_numero):
     return render(request, 'transfer_pac.html', context)
 
 
-def redirect_page(request):
-    pass
+@login_required(login_url="/main/login")
+# adicionar permissão
+def transferir_grupo(request, prontuario_grupo_numero):
+    grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    transfer_form = GrupoTrasferenciaForm()
+    sucesso = False
+
+    if request.method == 'POST':
+        transfer_form = GrupoTrasferenciaForm(request.POST)
+
+        if transfer_form.is_valid():
+            novo_terapeuta = transfer_form.cleaned_data['novo_terapeutas']
+            grupo.terapeuta_responsavel = novo_terapeuta
+            grupo.save()
+            sucesso = True
+
+    context = {
+        'form': transfer_form,
+        'sucesso': sucesso,
+    }
+
+    return render(request, 'transfer_grupo.html', context)
 
 
 @login_required(login_url="/main/login")
 @permission_required('main.add_terapeuta', raise_exception=True)
-def cadastro_user(request):
+def cadastro_user_terapeuta(request):
     user_form = UserRegistrationForm()
     terapeuta_form = CadastroProfissionaisForm
     terapeutas_group = Group.objects.get(name='Terapeutas')
@@ -247,14 +345,9 @@ def cadastro_user(request):
             sucesso = True
             new_user = user_form.save()
             new_user.save()
-
-            # Adiciona o novo usuário ao grupo 'Terapeutas'
             new_user.groups.add(terapeutas_group)
-
             terapeuta = terapeuta_form.save(commit=False)
-            # Relaciona as entradas entre os models 'User' e 'Terapeutas'
             terapeuta.usuario_codigo_id = new_user.id
-            # Define o mesmo email para usuário e terapeuta, evitando duplicar campos
             terapeuta.email = new_user.email
             terapeuta.save()
 
@@ -311,7 +404,6 @@ def usuario_login(request):
             terapeutas_group_id = 1  # Conferir ID
             administrativo_group_id = 3  # conferir ID
 
-            # Obtendo os grupos através dos IDs definidos
             terapeutas_group = Group.objects.get(id=terapeutas_group_id)
             administrativo_group = Group.objects.get(id=administrativo_group_id)
 
@@ -369,4 +461,8 @@ def detalhes_paciente(request, prontuario_numero):
 
 @login_required(login_url="/main/login")
 def list_consultas(request):
+    pass
+
+
+def redirect_page(request):
     pass

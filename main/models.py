@@ -45,7 +45,7 @@ class CadastroPacientes(models.Model):
     objects = models.Manager()
 
     def __str__(self):
-        return f'{self.nome}, prontuário: {self.prontuario_numero}, terapeuta:{self.terapeuta}'
+        return f'{self.nome}, prontuário: {self.prontuario_numero}, terapeuta: {self.terapeuta}'
 
     class Meta:
         verbose_name = 'Paciente'
@@ -59,6 +59,7 @@ class CadastroPacientes(models.Model):
 
 class ConveniosAceitos(models.Model):
     nome = models.CharField(verbose_name='Convênio', max_length=50)
+    objects = models.Manager()
 
     def __str__(self):
         return f'{self.nome}'
@@ -82,6 +83,7 @@ class CadastroProfissionais(models.Model):
         related_name='Terapeutas',
         on_delete=models.PROTECT
     )
+    objects = models.Manager()
 
     def __str__(self):
         return f'{self.nome}'
@@ -102,9 +104,10 @@ class CadastroGrupos(models.Model):
         related_name='grupos',
         on_delete=models.PROTECT
     )
-    desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
+    desligado = models.BooleanField(verbose_name='Detativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
+    objects = models.Manager()
 
     def __str__(self):
         return f'{self.label} - {self.terapeuta_responsavel}'
