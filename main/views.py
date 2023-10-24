@@ -171,8 +171,6 @@ def add_entrada(request, prontuario_numero):
 def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
-    current_grupo_membros = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
-
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
     ultima_entrada = ProntuariosGrupos.objects.filter(
@@ -254,7 +252,9 @@ def desligar_grupo(request, prontuario_grupo_numero):
     grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
     desligamento_form = GrupoDesligamentoForm()
 
-    ultima_entrada = ProntuariosGrupos.objects.filter(prontuario_grupo_numero=prontuario_grupo_numero).order_by('-data_consulta').first()
+    ultima_entrada = ProntuariosGrupos.objects.filter(
+        prontuario_grupo_numero=prontuario_grupo_numero
+    ).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
     sucesso = False
 
@@ -457,6 +457,22 @@ def detalhes_paciente(request, prontuario_numero):
         'idade': idade_paciente
     }
     return render(request, 'paciente_details.html', context)
+
+
+@login_required(login_url="/main/login")
+def detalhes_grupo(request, prontuario_grupo_numero):
+    current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_grupo_sessoes = ProntuariosGrupos.objects.filter(prontuario_grupo_numero=prontuario_grupo_numero)
+    sessoes_count = len(current_grupo_sessoes)
+
+    context = {
+        'grupo': current_grupo,
+        'sessoes': current_grupo_sessoes,
+        'count': sessoes_count
+    }
+
+    return render(request, 'HTML-TEMPLATE-PLACEHOLDER', context)
+    pass
 
 
 @login_required(login_url="/main/login")
