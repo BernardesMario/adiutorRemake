@@ -100,7 +100,7 @@ def list_entradas(request, prontuario_numero):
 def list_entradas_grupo(request, prontuario_grupo_numero):
     current_user_terapeuta = request.user.Terapeutas.get()
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    current_grupo_prontuario = ProntuariosGrupos.objects.get(numero_id=prontuario_grupo_numero)
+    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero_id=prontuario_grupo_numero)
 
     context = {
         'current_user': current_user_terapeuta,
@@ -109,23 +109,6 @@ def list_entradas_grupo(request, prontuario_grupo_numero):
 
     }
     return render(request, 'prontuario_grupo.html', context)
-
-
-'''
-# Definir permissões
-@login_required(login_url="/main/login")
-def list_entrada_grupo(request, prontuario_grupo_numero):
-    current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero=prontuario_grupo_numero)
-
-    context = {
-        'current_grupo': current_grupo,
-        'grupo_prontuario': current_grupo_prontuario
-
-    }
-    return render(request, 'HTML-PLACHOLDER',  context)
-    pass
-    '''
 
 
 @login_required(login_url="/main/login")
@@ -170,6 +153,7 @@ def add_entrada(request, prontuario_numero):
 @permission_required('main.add_entry_group', raise_exception=True)
 def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    # current_grupo_id = current_grupo.id
     current_user_terapeuta = request.user.Terapeutas.get()
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
@@ -177,31 +161,40 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
         numero=current_grupo.prontuario_grupo_numero
     ).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
-    entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
 
+    entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
     sucesso = False
 
-    if entrada_form.is_valid():
-        data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+    if request.method == 'POST':
+        entrada_form = EntradaProntuarioGrupoForm(request.POST)
 
-        if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
-            entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
+        if entrada_form.is_valid():
+            data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+            print("form is valid passed")
 
-        if not entrada_form.errors:
-            sucesso = True
-            new_entry = entrada_form.save(commit=False)
-            new_entry.numero = current_grupo
-            new_entry.autor = current_user_terapeuta
-            new_entry.save()
+            if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
+                entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
 
-            for paciente in pacientes_grupo:
-                entrada_prontuario_individual = Prontuarios(
-                    numero=paciente,
-                    autor=current_user_terapeuta,
-                    data_consulta=new_entry.data_consulta,
-                    entrada=new_entry.entrada
-                )
-                entrada_prontuario_individual.save()
+            if not entrada_form.errors:
+                print("Not errors passed")
+                sucesso = True
+
+                new_entry = entrada_form.save(commit=False)
+                new_entry.numero_id = current_grupo.prontuario_grupo_numero
+
+                new_entry.autor = current_user_terapeuta
+                new_entry.save()
+                print("new entry save pased")
+
+                for paciente in pacientes_grupo:
+                    entrada_prontuario_individual = Prontuarios(
+                            numero=paciente,
+                            autor=current_user_terapeuta,
+                            data_consulta=new_entry.data_consulta,
+                            entrada=new_entry.entrada
+                        )
+                    entrada_prontuario_individual.save()
+                    print("individual save passed")
 
     context = {
         'form': entrada_form,
@@ -253,7 +246,7 @@ def desligar_grupo(request, prontuario_grupo_numero):
     desligamento_form = GrupoDesligamentoForm()
 
     ultima_entrada = ProntuariosGrupos.objects.filter(
-        prontuario_grupo_numero=prontuario_grupo_numero
+        numero_id=prontuario_grupo_numero
     ).order_by('-data_consulta').first()
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
     sucesso = False
@@ -278,7 +271,7 @@ def desligar_grupo(request, prontuario_grupo_numero):
         'sucesso': sucesso,
     }
 
-    return render(request, 'deslig_groupo.html', context)
+    return render(request, 'deslig_grupo.html', context)
 
 
 @login_required(login_url="/main/login")
@@ -462,16 +455,18 @@ def detalhes_paciente(request, prontuario_numero):
 @login_required(login_url="/main/login")
 def detalhes_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    current_grupo_sessoes = ProntuariosGrupos.objects.filter(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_grupo_sessoes = ProntuariosGrupos.objects.filter(numero_id=prontuario_grupo_numero)
+    current_grupo_membros = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
     sessoes_count = len(current_grupo_sessoes)
 
     context = {
         'grupo': current_grupo,
         'sessoes': current_grupo_sessoes,
+        'participantes': current_grupo_membros,
         'count': sessoes_count
     }
 
-    return render(request, 'HTML-TEMPLATE-PLACEHOLDER', context)
+    return render(request, 'grupo_detalhes.html', context)
     pass
 
 

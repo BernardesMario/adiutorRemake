@@ -104,7 +104,7 @@ class CadastroGrupos(models.Model):
         related_name='grupos',
         on_delete=models.PROTECT
     )
-    desligado = models.BooleanField(verbose_name='Detativado', help_text='Grupo encerrado', default=False)
+    desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
     objects = models.Manager()

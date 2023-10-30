@@ -2,7 +2,7 @@ from django.urls import path
 from django.contrib.auth.decorators import permission_required
 from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
-                    desligar_paciente, transferir_paciente, admin_interface,
+                    desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo,
                     add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo)
 
@@ -60,5 +60,9 @@ urlpatterns = [
          # permission_required(CREATE-PERMISSION)(),
          desligar_grupo,
          name='deslig-grupo'
+         ),
+    path('dados_grupo/<str:prontuario_grupo_numero>/',
+         detalhes_grupo,
+         name='dados-grupo'
          ),
 ]

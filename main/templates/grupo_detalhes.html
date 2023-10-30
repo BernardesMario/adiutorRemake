@@ -1,0 +1,43 @@
+
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+<head>
+        <title>{% block title %} Grupo {{ grupo.prontuario_grupo_numero }} {% endblock %}</title>
+
+</head>
+<!DOCTYPE html>
+<html>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1> Grupo: {{ grupo.label }} <br>
+     Prontuário nº:  {{ grupo.prontuario_grupo_numero }}
+</h1>
+    <ul>
+            <li>
+                Data de Início: {{ grupo.data_inicio}} <br>
+                Número de sessões: {{ count }} <br>
+                Participantes: {% for participante in participantes %} <br>
+                <li>
+                Nome: {{ participante.nome }}
+                Prontuário Individual: {{ participante.prontuario_numero }}
+                Contato: {{ paciente.telefone_numero }} <br>
+                </li>
+                {% empty %}
+                <li>No entries found.</li>
+                {% endfor %}
+
+            </li>
+    </ul>
+{% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>
+</body>
+</html>
