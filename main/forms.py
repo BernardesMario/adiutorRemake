@@ -1,10 +1,21 @@
+import re
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, User
 from django.contrib.auth.models import Group
-from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
 from datetime import date
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos)
+
+
+def validate_letters(value):
+    if not re.match("^[a-zA-Z]+$", value):
+        raise ValidationError("Este campo pode conter apenas letras")
+
+
+def validate_numbers(value):
+    if not re.match("^[0-9]+$", value):
+        raise ValidationError("Este campo pode conter apenas números")
 
 
 class UserRegistrationForm(UserCreationForm):
@@ -22,6 +33,12 @@ class UserRegistrationForm(UserCreationForm):
 
 
 class CadastroProfissionaisForm(forms.ModelForm):
+
+    nome = forms.CharField(validators=[validate_letters])
+    unimed_codigo = forms.CharField(validators=[validate_numbers])
+    conselho_codigo = forms.CharField(validators=[validate_numbers])
+    telefone_numero = forms.CharField(validators=[validate_numbers])
+
     class Meta:
         model = CadastroProfissionais
         fields = ['nome', 'conselho_codigo', 'unimed_codigo', 'telefone_numero']
@@ -48,6 +65,12 @@ class CadastroPacienteForm(forms.ModelForm):
 
             if idade_paciente < 18 and not responsavel_legal:
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
+
+    nome = forms.CharField(validators=[validate_letters])
+    responsavel_legal = forms.CharField(validators=[validate_letters])
+    cpf_numero = forms.CharField(validators=[validate_numbers])
+    carteirinha_convenio = forms.CharField(validators=[validate_numbers])
+    telefone_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
         model = CadastroPacientes
@@ -87,6 +110,12 @@ class CadastroPacienteNovoForm(forms.ModelForm):
             if idade_paciente < 18 and not responsavel_legal:
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
 
+    nome = forms.CharField(validators=[validate_letters])
+    responsavel_legal = forms.CharField(validators=[validate_letters])
+    cpf_numero = forms.CharField(validators=[validate_numbers])
+    carteirinha_convenio = forms.CharField(validators=[validate_numbers])
+    telefone_numero = forms.CharField(validators=[validate_numbers])
+
     class Meta:
         model = CadastroPacientes
         fields = ['nome', 'prontuario_numero', 'responsavel_legal',
@@ -101,6 +130,9 @@ class CadastroPacienteNovoForm(forms.ModelForm):
 
 
 class CadastroGrupoForm(forms.ModelForm):
+
+    prontuario_grupo_numero = forms.CharField(validators=[validate_numbers])
+
     class Meta:
         model = CadastroGrupos
         fields = ['label', 'prontuario_grupo_numero',
