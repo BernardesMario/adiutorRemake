@@ -17,7 +17,9 @@
 
             {% if sucesso %}
                 <p class="alert alert-success">
-                    Grupo Desligado com sucesso!
+                    Grupo Desligado com sucesso! <br>
+                    <a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
+
                 </p>
             {% else %}
 
@@ -25,7 +27,7 @@
                     {% csrf_token %}
                     {% bootstrap_form form %}
                     <button type="submit" class="btn btn-primary btn-block">
-                        desligar
+                        Desligar
                     </button>
 
                 </form>

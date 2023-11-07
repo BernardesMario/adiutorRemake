@@ -11,6 +11,8 @@ app_name = 'main'
 
 urlpatterns = [
     path('novo/', cadastrar_paciente, name='novo'),
+    path('add_grupo/', cadastrar_grupo, name='add-grupo'),
+    path('add_pac_grupo/', add_pacs_grupo, name='add-pacs-grupo'),
     path('add_entrada/<str:prontuario_numero>/',
          permission_required('main.add_entry')(add_entrada),
          name='add_entrada'

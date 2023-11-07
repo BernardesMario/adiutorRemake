@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, User
 from django.contrib.auth.models import Group
+from django.core.validators import RegexValidator
 from datetime import date
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos)

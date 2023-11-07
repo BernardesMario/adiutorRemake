@@ -46,7 +46,7 @@ def cadastrar_grupo(request):
         'form': grupo_form,
     }
 
-    return render(request, 'HTML-PLACEHOLDER', context)
+    return render(request, 'cadastramento_grupo.html', context)
 
 
 @login_required(login_url="/main/login")

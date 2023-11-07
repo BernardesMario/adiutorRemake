@@ -13,7 +13,7 @@
     {% block content %}
         <h1>Bem Vindo {{ request.user.username }} </h1>
 
-        <a href="{% url 'main:novo'  %}"> Cadastrar Paciente </a>
+        <a href="{% url 'main:novo' %}"> Cadastrar Paciente </a>
         <a href="{% url 'main:convenio' %}"> Cadastrar Convenio </a>
         <a href="{% url 'main:usuario' %}"> Cadastrar Terapeuta </a>
 
