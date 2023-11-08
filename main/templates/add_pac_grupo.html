@@ -1,0 +1,49 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>{% block title %} Adicionar Pacientes {% endblock %}</title>
+</head>
+<body>
+<div class="page-container">
+    {% block content %}
+
+    {% if sucesso %}
+    <p class="alert alert-success">
+        Grupo registrado com sucesso! <br>
+        <a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
+    </p>
+    {% else %}
+    <form method="post">
+  {% csrf_token %}
+  {{ form }}
+  <table>
+    <thead>
+      <tr>
+        <th>Checkbox</th>
+        <th>Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paciente in pacientes %}
+        <tr>
+          <td><input type="checkbox" name="selected_items" value="{{ paciente.id }}"></td>
+          <td>{{ paciente.nome }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <input type="submit" value="Adicionar Pacientes ao Grupo">
+</form>
+    {% endif %}
+    {% endblock %}
+</div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

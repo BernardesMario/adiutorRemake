@@ -3,7 +3,7 @@
 {% load static%}
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <title>{% block title %}Novo Paciente{% endblock %}</title>
 
@@ -35,7 +35,9 @@
 
 {% if sucesso %}
 <p class="alert alert-success">
-    Paciente Cadastrado com sucesso!
+    Paciente Cadastrado com sucesso!<br>
+    <a href="{% url 'main:admnistrativo' %}"> Voltar ao Inicio </a>
+
 </p>
 {% else %}
 

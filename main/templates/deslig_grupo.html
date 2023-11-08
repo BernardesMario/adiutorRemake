@@ -3,7 +3,7 @@
 {% load static%}
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <title>{% block title %}Desligamento{% endblock %}</title>
 </head>
@@ -19,7 +19,6 @@
                 <p class="alert alert-success">
                     Grupo Desligado com sucesso! <br>
                     <a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
-
                 </p>
             {% else %}
 

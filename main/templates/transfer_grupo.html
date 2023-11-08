@@ -3,7 +3,7 @@
 {% load static%}
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <title>{% block title %} Transferir Grupo {% endblock %}</title>
 
@@ -34,7 +34,9 @@
 
 {% if sucesso %}
 <p class="alert alert-success">
-    Grupo transferido com sucesso!
+    Grupo transferido com sucesso!<br>
+    <a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
+
 </p>
 {% else %}
 

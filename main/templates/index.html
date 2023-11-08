@@ -3,7 +3,7 @@
 {% load static%}
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
         <title>{% block title %} Indice {% endblock %}</title>
 
@@ -12,7 +12,7 @@
 <div class="page-container">
 
 {% block content %}
-<h1>Bem Vindo {{ request.user.username }} </h1>
+<h1>Bem Vindo {{ request.user.username }} ! </h1>
     <p> <a href="{% url 'main:perfil' %}"> Informações Pessoais </a></p>
     {% csrf_token %}
 
@@ -47,6 +47,8 @@
         {% empty %}
             <li>No entries found.</li>
         {% endfor %}
+        <a href="{% url 'main:add-grupo' %}"> Criar Novo Grupo </a>
+
     </ul>
 {% endblock %}
 </div>

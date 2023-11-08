@@ -3,7 +3,7 @@
 {% load static %}
 
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
     <title>{% block title %}Prontuario{% endblock %}</title>
 </head>
@@ -26,6 +26,8 @@
     </ul>
     {% endblock %}
 </div>
+
+<a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
 
 <footer class="footer">
     criado por Mário P. Bernardes, 2023

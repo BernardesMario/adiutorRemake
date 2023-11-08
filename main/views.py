@@ -38,7 +38,8 @@ def cadastrar_grupo(request):
 
     if grupo_form.is_valid():
         new_group = grupo_form.save()
-        redirect_url = reverse('add_pacs_grupo', args=[str(new_group.id)])
+
+        redirect_url = reverse('main:add-pac-grupo', args=[str(new_group.id)])
         return redirect(redirect_url)
         # return redirect('/main/add_pac_grp', grupo_id=new_group.id)
 
@@ -51,18 +52,26 @@ def cadastrar_grupo(request):
 
 @login_required(login_url="/main/login")
 def add_pacs_grupo(request, grupo_id):
+    sucesso = False
+    pacientes = CadastroPacientes.objects.filter(grupo__isnull=True)
     pacs_form = AdicionarPacGrupoForm
+    grupo_id = grupo_id
 
     if request.method == "POST":
         grupo = grupo_id
         selected_items = request.POST.getlist('selected_items')
         CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo)
 
+        if pacs_form.is_valid:
+            sucesso = True
+
     context = {
-        'form': pacs_form
+        'form': pacs_form,
+        'pacientes': pacientes,
+        'sucesso': sucesso
     }
 
-    return render(request, 'HTML-PLACEHOLDER', context)
+    return render(request, 'add_pac_grupo.html', context)
 
 
 @login_required(login_url="/main/login")

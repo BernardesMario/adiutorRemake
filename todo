@@ -1,13 +1,17 @@
 
 # TODO:
 # assinatura para prontuários
-# validação de valores de entrada / anomalias (tel, cpf, etc)
 # view de listagem de consultas/mes
 # opção de impressão de prontuario
 # upload de imagens/arquivos - linkar com prontuário
 # pagamentos
-# prontuario grupo (uma entrada > varios membros)
-# templates HTML para criação do grupo
 # implement 2FA
 # verificar alteração de dados de usuários
-# adicionar 'retorno ao incio' aos templates html
+# Criar listagens distintas para Pacientes e Grupos ativos e Inativos + Bloqueio de dados
+# Alteração de Modalidade quando adicionado ao grupo
+# Adicionar pacientes para grupos já existentes
+# Adicionar/Remover membros de grupos já existentes
+# Validação de datas para formulários (data futura)
+#? Validação de entrada dupla prontuario
+#? responsabilidade criação grupo
+#? CPF psicologo
