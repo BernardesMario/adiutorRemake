@@ -162,7 +162,6 @@ def add_entrada(request, prontuario_numero):
 @permission_required('main.add_entry_group', raise_exception=True)
 def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
-    # current_grupo_id = current_grupo.id
     current_user_terapeuta = request.user.Terapeutas.get()
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
 
@@ -179,13 +178,11 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
 
         if entrada_form.is_valid():
             data_nova_entrada = entrada_form.cleaned_data['data_consulta']
-            print("form is valid passed")
 
             if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
                 entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
 
             if not entrada_form.errors:
-                print("Not errors passed")
                 sucesso = True
 
                 new_entry = entrada_form.save(commit=False)
@@ -193,7 +190,6 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
 
                 new_entry.autor = current_user_terapeuta
                 new_entry.save()
-                print("new entry save pased")
 
                 for paciente in pacientes_grupo:
                     entrada_prontuario_individual = Prontuarios(
@@ -203,7 +199,6 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
                             entrada=new_entry.entrada
                         )
                     entrada_prontuario_individual.save()
-                    print("individual save passed")
 
     context = {
         'form': entrada_form,

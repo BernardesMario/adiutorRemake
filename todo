@@ -7,11 +7,14 @@
 # pagamentos
 # implement 2FA
 # verificar alteração de dados de usuários
+# defenir ordering
 # Criar listagens distintas para Pacientes e Grupos ativos e Inativos + Bloqueio de dados
-# Alteração de Modalidade quando adicionado ao grupo
+# Alteração de Modalidade quando adicionado ao grupo *
 # Adicionar pacientes para grupos já existentes
 # Adicionar/Remover membros de grupos já existentes
-# Validação de datas para formulários (data futura)
+# Criar Permissões [ver prontuario grupo, delisgar grupo, transferir grupo]
+# Presença para consultas de Grupo
+# Validação de datas para formulários (data futura - limitar distância?)
 #? Validação de entrada dupla prontuario
 #? responsabilidade criação grupo
 #? CPF psicologo

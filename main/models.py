@@ -65,6 +65,7 @@ class CadastroPacientes(models.Model):
     class Meta:
         verbose_name = 'Paciente'
         verbose_name_plural = 'Pacientes'
+        ordering = ["nome"]
         permissions = [
             ('transfer_pac', 'Transferir Paciente (Terapeutas)'),
             ('deslig_pac', 'Desligar Paciente (Terapeutas)'),
