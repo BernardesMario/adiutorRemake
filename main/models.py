@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from accounts.models import CustomUser
 import re
 
@@ -15,20 +16,21 @@ def validate_numbers(value):
 
 
 class CadastroPacientes(models.Model):
-    nome = models.CharField(verbose_name='Nome do Paciente', max_length=100, validators=[validate_letters])
+    nome = models.CharField(verbose_name='Nome do Paciente', max_length=100, validators=[validate_letters,MinLengthValidator(limit_value=5)])
     prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7,
-                                         unique=True, validators=[validate_numbers]
+                                         unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=7)]
                                          )
     nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa')
     responsavel_legal = models.CharField(verbose_name='Responsável Legal', max_length=100,
-                                         null=True, blank=True, validators=[validate_letters]
+                                         null=True, blank=True, validators=[validate_letters,
+                                                                            MinLengthValidator(limit_value=5)]
                                          )
 
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
 
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
-    cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True, validators=[validate_numbers])
+    cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=11)])
 
     MOD_CHOICES = (
         (0, 'Individual'),
@@ -49,13 +51,22 @@ class CadastroPacientes(models.Model):
         on_delete=models.PROTECT
     )
     carteirinha_convenio = models.CharField(verbose_name='Número do Convênio',
-                                            max_length=50, blank=True, null=True, validators=[validate_numbers])
+                                            max_length=50, blank=True, null=True,
+                                            validators=[validate_numbers,MinLengthValidator(limit_value=7)])
     terapeuta = models.ForeignKey(
         'CadastroProfissionais',
         related_name='pacientes',
         on_delete=models.PROTECT
     )
-    telefone_numero = models.CharField(verbose_name='Telefone', max_length=11, validators=[validate_numbers])
+    endereco_rua = models.CharField(verbose_name='Endereço', max_length=100,
+                                    validators=[MinLengthValidator(limit_value=10)])
+    endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50,
+                                       validators=[MinLengthValidator(limit_value=10)])
+    endereco_numero = models.IntegerField(verbose_name='Número', validators=[MaxLengthValidator(limit_value=7)])
+    endereco_completmento = models.CharField(verbose_name='Complemento', max_length=100,
+                                             validators=[MinLengthValidator(limit_value=4)])
+    telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
+                                       validators=[validate_numbers,MinLengthValidator(limit_value=11)])
     email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
@@ -75,7 +86,7 @@ class CadastroPacientes(models.Model):
 
 
 class ConveniosAceitos(models.Model):
-    nome = models.CharField(verbose_name='Convênio', max_length=50)
+    nome = models.CharField(verbose_name='Convênio', max_length=50, validators=[MinLengthValidator(limit_value=3)])
     objects = models.Manager()
 
     def __str__(self):
@@ -99,6 +110,13 @@ class CadastroProfissionais(models.Model):
     email = models.EmailField(verbose_name='Email', editable=True)
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
                                        editable=True, validators=[validate_numbers])
+    endereco_rua = models.CharField(verbose_name='Endereço', max_length=100)
+    endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50)
+    endereco_numero = models.IntegerField(verbose_name='Número', validators=[MaxLengthValidator(limit_value=7)])
+    endereco_completmento = models.CharField(verbose_name='Complemento', max_length=100)
+    cpf_numero = models.CharField(verbose_name='CPF', unique=True, validators=[validate_numbers], max_length=11)
+    rg_numero = models.IntegerField(verbose_name='Número RG', validators=[MaxLengthValidator(limit_value=12)])
+    rg_emissor = models.CharField(verbose_name='Orgão Emissor RG', max_length=50)
     usuario_codigo = models.ForeignKey(
         CustomUser,
         related_name='Terapeutas',
@@ -118,9 +136,9 @@ class CadastroProfissionais(models.Model):
 
 
 class CadastroGrupos(models.Model):
-    label = models.CharField(verbose_name='Nome', max_length=100)
+    label = models.CharField(verbose_name='Nome', max_length=100, validators=[MinLengthValidator(limit_value=4)])
     prontuario_grupo_numero = models.CharField(verbose_name='Nº Prontuário do Grupo', max_length=5,
-                                               unique=True, validators=[validate_numbers])
+                                               unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=4)])
     terapeuta_responsavel = models.ForeignKey(
         'CadastroProfissionais',
         related_name='grupos',
@@ -129,7 +147,7 @@ class CadastroGrupos(models.Model):
     )
 
     terapeuta_auxiliar1 = models.ManyToManyField(CadastroProfissionais,
-                                                 verbose_name='Terapeuta Auxiliar', blank=True, null=True)
+                                                 verbose_name='Terapeuta Auxiliar', blank=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
@@ -164,7 +182,7 @@ class ProntuariosGrupos(models.Model):
     )
     data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
     data_consulta = models.DateField(verbose_name='Data da Consulta')
-    entrada = models.TextField(verbose_name='Parecer')
+    entrada = models.TextField(verbose_name='Parecer', validators=[MinLengthValidator(limit_value=10)])
     objects = models.Manager()
 
     def __str__(self):
@@ -217,7 +235,7 @@ class Prontuarios(models.Model):
     )
     data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
     data_consulta = models.DateField(verbose_name='Data da Consulta')
-    entrada = models.TextField(verbose_name='Parecer')
+    entrada = models.TextField(verbose_name='Parecer',validators=[MinLengthValidator(limit_value=10)])
     objects = models.Manager()
 
     def __str__(self):

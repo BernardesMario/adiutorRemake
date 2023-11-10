@@ -18,5 +18,4 @@
 # * Validação de entrada dupla prontuario - complementar entrada já feita, não aceitar novas na mesma data
 # * responsabilidade criação grupo - psicólogo
 # * CPF, RG, Endereço,  psicologo
-# * endereço pac - separados po campo
 # * Implementar variaveis de ambiente (os.environ) para Email Config em settings
