@@ -1,6 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from accounts.models import CustomUser
 import re
 
 
@@ -12,6 +12,7 @@ def validate_letters(value):
 def validate_numbers(value):
     if not re.match("^[0-9]+$", value):
         raise ValidationError("Este campo pode conter apenas números")
+
 
 class CadastroPacientes(models.Model):
     nome = models.CharField(verbose_name='Nome do Paciente', max_length=100, validators=[validate_letters])
@@ -89,16 +90,17 @@ class ConveniosAceitos(models.Model):
 
 
 class CadastroProfissionais(models.Model):
-    nome = models.CharField(verbose_name='Nome', max_length=100, unique=True, editable=True, validators=[validate_letters])
+    nome = models.CharField(verbose_name='Nome', max_length=100,
+                            unique=True, editable=True, validators=[validate_letters])
     conselho_codigo = models.CharField(verbose_name='CRP', max_length=5, unique=True,
-                                        editable=True, validators=[validate_numbers])
+                                       editable=True, validators=[validate_numbers])
     unimed_codigo = models.CharField(verbose_name='Número cadastro Unimed', max_length=6,
                                      unique=True, editable=True, validators=[validate_numbers])
     email = models.EmailField(verbose_name='Email', editable=True)
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
                                        editable=True, validators=[validate_numbers])
     usuario_codigo = models.ForeignKey(
-        User,
+        CustomUser,
         related_name='Terapeutas',
         on_delete=models.PROTECT
     )
@@ -122,8 +124,12 @@ class CadastroGrupos(models.Model):
     terapeuta_responsavel = models.ForeignKey(
         'CadastroProfissionais',
         related_name='grupos',
-        on_delete=models.PROTECT
+        on_delete=models.PROTECT,
+        verbose_name='Terapeuta Responsável'
     )
+
+    terapeuta_auxiliar1 = models.ManyToManyField(CadastroProfissionais,
+                                                 verbose_name='Terapeuta Auxiliar', blank=True, null=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
@@ -170,6 +176,28 @@ class ProntuariosGrupos(models.Model):
         permissions = [
             ('add_entry_group', 'Adicionar entradas em prontuários de Grupo (Terapeutas)')
         ]
+
+
+class PresencasGrupo(models.Model):
+    consulta = models.ForeignKey('ProntuariosGrupos',
+                                 on_delete=models.PROTECT,
+                                 related_name='Consulta',
+                                 verbose_name='Consulta'
+                                 )
+    grupo_prontuario = models.ForeignKey('CadastroGrupos',
+                                         to_field='prontuario_grupo_numero',
+                                         on_delete=models.PROTECT,
+                                         verbose_name='Grupo nº')
+
+    data = models.DateField(verbose_name='Data', blank=False, null=False)
+    pacientes = models.ManyToManyField(CadastroPacientes)
+
+    def __str__(self):
+        return f'Presenças Grupo {self.grupo_prontuario}'
+
+    class Meta:
+        verbose_name = 'Presença'
+        verbose_name_plural = 'Presenças'
 
 
 class Prontuarios(models.Model):

@@ -1,20 +1,22 @@
 
 # TODO:
-# assinatura para prontuários
+# assinatura para prontuários - não
 # view de listagem de consultas/mes
 # opção de impressão de prontuario
 # upload de imagens/arquivos - linkar com prontuário
 # pagamentos
-# implement 2FA
-# verificar alteração de dados de usuários
-# defenir ordering
+# implement 2FA - fazer
+# verificar alteração de dados de usuários - permissão administrativa
+# definir ordering
 # Criar listagens distintas para Pacientes e Grupos ativos e Inativos + Bloqueio de dados
 # Alteração de Modalidade quando adicionado ao grupo *
 # Adicionar pacientes para grupos já existentes
 # Adicionar/Remover membros de grupos já existentes
 # Criar Permissões [ver prontuario grupo, delisgar grupo, transferir grupo]
 # Presença para consultas de Grupo
-# Validação de datas para formulários (data futura - limitar distância?)
-#? Validação de entrada dupla prontuario
-#? responsabilidade criação grupo
-#? CPF psicologo
+#  Validação de datas para formulários (data futura - limitar distância?) - para cadastrro deixar livre
+# * Validação de entrada dupla prontuario - complementar entrada já feita, não aceitar novas na mesma data
+# * responsabilidade criação grupo - psicólogo
+# * CPF, RG, Endereço,  psicologo
+# * endereço pac - separados po campo
+# * Implementar variaveis de ambiente (os.environ) para Email Config em settings

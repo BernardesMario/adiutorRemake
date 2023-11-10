@@ -1,27 +1,20 @@
-import re
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, User
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from datetime import date
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
-                     ConveniosAceitos, Prontuarios, ProntuariosGrupos)
+                     ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
+from accounts.models import CustomUser
 
 
-def validate_letters(value):
-    if not re.match("^[a-zA-Z]+$", value):
-        raise ValidationError("Este campo pode conter apenas letras")
+class TerapeutaRegistrationForm(UserCreationForm):
+    phone_number = forms.CharField(validators=[validate_numbers])
+    username = forms.CharField(validators=[validate_letters])
 
-
-def validate_numbers(value):
-    if not re.match("^[0-9]+$", value):
-        raise ValidationError("Este campo pode conter apenas números")
-
-
-class UserRegistrationForm(UserCreationForm):
     class Meta:
-        model = User
-        fields = ['username', 'email']
+        model = CustomUser
+        fields = ['username', 'email', 'phone_number']
 
         def save(self, commit=True):
             user = super().save(commit=False)

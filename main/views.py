@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 from django.http import HttpResponseForbidden, HttpResponse
 from django.template.loader import render_to_string
 from datetime import date
-from .forms import (UserRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
+from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
                     CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
@@ -329,13 +329,13 @@ def transferir_grupo(request, prontuario_grupo_numero):
 @login_required(login_url="/main/login")
 @permission_required('main.add_terapeuta', raise_exception=True)
 def cadastro_user_terapeuta(request):
-    user_form = UserRegistrationForm()
+    user_form = TerapeutaRegistrationForm()
     terapeuta_form = CadastroProfissionaisForm
     terapeutas_group = Group.objects.get(name='Terapeutas')
     sucesso = False
 
     if request.method == 'POST':
-        user_form = UserRegistrationForm(request.POST)
+        user_form = TerapeutaRegistrationForm(request.POST)
         terapeuta_form = CadastroProfissionaisForm(request.POST)
 
         if user_form.is_valid():
