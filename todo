@@ -19,3 +19,4 @@
 # * responsabilidade criação grupo - psicólogo
 # * CPF, RG, Endereço,  psicologo
 # * Implementar variaveis de ambiente (os.environ) para Email Config em settings
+# FIX  validate_letters

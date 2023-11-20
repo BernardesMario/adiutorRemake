@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import permission_required, login_required
 from django.http import HttpResponseForbidden, HttpResponse
 from django.template.loader import render_to_string
 from datetime import date
+from verify_email.email_handler import send_verification_email
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
                     CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
@@ -330,7 +331,7 @@ def transferir_grupo(request, prontuario_grupo_numero):
 @permission_required('main.add_terapeuta', raise_exception=True)
 def cadastro_user_terapeuta(request):
     user_form = TerapeutaRegistrationForm()
-    terapeuta_form = CadastroProfissionaisForm
+    terapeuta_form = CadastroProfissionaisForm()
     terapeutas_group = Group.objects.get(name='Terapeutas')
     sucesso = False
 
@@ -338,7 +339,7 @@ def cadastro_user_terapeuta(request):
         user_form = TerapeutaRegistrationForm(request.POST)
         terapeuta_form = CadastroProfissionaisForm(request.POST)
 
-        if user_form.is_valid():
+        if user_form.is_valid() and terapeuta_form.is_valid():
             sucesso = True
             new_user = user_form.save()
             new_user.save()
@@ -346,7 +347,12 @@ def cadastro_user_terapeuta(request):
             terapeuta = terapeuta_form.save(commit=False)
             terapeuta.usuario_codigo_id = new_user.id
             terapeuta.email = new_user.email
+            terapeuta.telefone_numero = new_user.phone_number
+
             terapeuta.save()
+            inactive_user = send_verification_email(request, user_form)
+        else:
+            print(terapeuta_form.errors)
 
     context = {
         'user_form': user_form,
@@ -399,7 +405,7 @@ def usuario_login(request):
 
             # Definindo os IDs dos grupos de Usuario(Administrativo/Terapeuta)
             terapeutas_group_id = 1  # Conferir ID
-            administrativo_group_id = 3  # conferir ID
+            administrativo_group_id = 2  # conferir ID
 
             terapeutas_group = Group.objects.get(id=terapeutas_group_id)
             administrativo_group = Group.objects.get(id=administrativo_group_id)

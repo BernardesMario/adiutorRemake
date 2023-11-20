@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from datetime import date
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
@@ -9,7 +9,8 @@ from accounts.models import CustomUser
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
-    phone_number = forms.CharField(validators=[validate_numbers])
+    phone_number = forms.CharField(validators=[
+        validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)])
     username = forms.CharField(validators=[validate_letters])
 
     class Meta:
@@ -30,11 +31,14 @@ class CadastroProfissionaisForm(forms.ModelForm):
     nome = forms.CharField(validators=[validate_letters])
     unimed_codigo = forms.CharField(validators=[validate_numbers])
     conselho_codigo = forms.CharField(validators=[validate_numbers])
-    telefone_numero = forms.CharField(validators=[validate_numbers])
+    rg_numero = forms.CharField(validators=[validate_numbers])
+    cpf_numero = forms.CharField(validators=[validate_numbers])
+    endereco_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
         model = CadastroProfissionais
-        fields = ['nome', 'conselho_codigo', 'unimed_codigo', 'telefone_numero']
+        fields = ['nome', 'conselho_codigo', 'unimed_codigo', 'cpf_numero', 'rg_numero',
+                  'endereco_rua', 'endereco_bairro', 'endereco_complemento', 'endereco_numero', 'rg_emissor']
 
 
 class CadastroPacienteForm(forms.ModelForm):
@@ -64,6 +68,7 @@ class CadastroPacienteForm(forms.ModelForm):
     cpf_numero = forms.CharField(validators=[validate_numbers])
     carteirinha_convenio = forms.CharField(validators=[validate_numbers])
     telefone_numero = forms.CharField(validators=[validate_numbers])
+    endereco_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
         model = CadastroPacientes
