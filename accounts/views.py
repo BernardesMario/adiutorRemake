@@ -14,7 +14,8 @@ class LoginWithOTP(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'Não há usuários cadastrados com este email!.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Não há usuários cadastrados com este email!.'},
+                            status=status.HTTP_404_NOT_FOUND)
 
         otp = generate_otp()
         user.otp = otp
