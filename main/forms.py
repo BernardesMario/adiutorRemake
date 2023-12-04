@@ -64,7 +64,7 @@ class CadastroPacienteForm(forms.ModelForm):
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
 
     nome = forms.CharField(validators=[validate_letters])
-    responsavel_legal = forms.CharField(validators=[validate_letters])
+    #responsavel_legal = forms.CharField(validators=[validate_letters])
     cpf_numero = forms.CharField(validators=[validate_numbers])
     carteirinha_convenio = forms.CharField(validators=[validate_numbers])
     telefone_numero = forms.CharField(validators=[validate_numbers])

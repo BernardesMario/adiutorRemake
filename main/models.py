@@ -1,13 +1,15 @@
 from django.db import models
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from accounts.models import CustomUser
+from datetime import date
 import re
 import regex
 
 
 def validate_letters(value):
-    if not regex.match(r"[^\p{L}\s]+$", value):
+    if not re.match(r"^[^\d]+$", str(value)):
         raise ValidationError("Este campo pode conter apenas letras")
 
 
@@ -16,20 +18,30 @@ def validate_numbers(value):
         raise ValidationError("Este campo pode conter apenas números")
 
 
+def validate_date_past(value):
+    if value and isinstance(value, date):
+        if value > timezone.now().date():
+            raise ValidationError("A data não pode estar no futuro!")
+
+    else:
+        pass
+
+
 class CadastroPacientes(models.Model):
     nome = models.CharField(verbose_name='Nome do Paciente', max_length=100,
                             validators=[validate_letters, MinLengthValidator(limit_value=5)])
     prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7,
                                          unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=7)]
                                          )
-    nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa')
+    nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa',
+                                  validators=[validate_date_past])
     responsavel_legal = models.CharField(verbose_name='Responsável Legal', max_length=100,
                                          null=True, blank=True, validators=[validate_letters,
-                                                                            MinLengthValidator(limit_value=5)]
-                                         )
+                                                                            MinLengthValidator(limit_value=5)])
 
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
-    data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
+    data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
+                                  validators=[validate_date_past])
 
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
     cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True,
@@ -64,12 +76,16 @@ class CadastroPacientes(models.Model):
     endereco_rua = models.CharField(verbose_name='Endereço', max_length=100,
                                     validators=[MinLengthValidator(limit_value=10)])
     endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50,
-                                       validators=[MinLengthValidator(limit_value=10)])
+                                       validators=[MinLengthValidator(limit_value=3)])
     endereco_numero = models.CharField(verbose_name='Número', max_length=7, validators=[validate_numbers])
-    endereco_completmento = models.CharField(verbose_name='Complemento', max_length=100,
+    endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100,
                                              validators=[MinLengthValidator(limit_value=4)])
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
                                        validators=[validate_numbers, MinLengthValidator(limit_value=11)])
+    cidade = models.CharField(verbose_name='Cidade', max_length=100, validators=[validate_letters,
+                                                                                MinLengthValidator(limit_value=3)])
+    cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
+                                                                                MinLengthValidator(limit_value=8)])
     email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
@@ -90,6 +106,25 @@ class CadastroPacientes(models.Model):
 
 class ConveniosAceitos(models.Model):
     nome = models.CharField(verbose_name='Convênio', max_length=50, validators=[MinLengthValidator(limit_value=3)])
+    cnpj_numero = models.CharField(verbose_name='CNPJ', max_length=14, validators=[validate_numbers,
+                                                                                   MinLengthValidator(limit_value=14)])
+    endereco_rua = models.CharField(verbose_name='Endereço', max_length=100,
+                                    validators=[MinLengthValidator(limit_value=10)])
+    endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50,
+                                       validators=[MinLengthValidator(limit_value=3)])
+    endereco_numero = models.CharField(verbose_name='Número', max_length=7, validators=[validate_numbers])
+    endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100,
+                                            validators=[MinLengthValidator(limit_value=4)])
+    cidade = models.CharField(verbose_name='Cidade', max_length=20, validators=[validate_letters,
+                                                                                MinLengthValidator(limit_value=3)])
+    cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
+                                                                                MinLengthValidator(limit_value=8)])
+    responsavel_contato = models.CharField(verbose_name='Contato do Resposável', max_length=50,
+                                           validators=[validate_numbers, MinLengthValidator(limit_value=3)])
+    telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
+                                       validators=[validate_numbers, MinLengthValidator(limit_value=11)])
+    email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
+    observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
 
     def __str__(self):
@@ -117,6 +152,12 @@ class CadastroProfissionais(models.Model):
     endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50)
     endereco_numero = models.CharField(verbose_name='Número', max_length=7, validators=[validate_numbers])
     endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100)
+    cidade = models.CharField(verbose_name='Cidade', max_length=20, validators=[validate_letters,
+                                                                                MinLengthValidator(limit_value=3)])
+    cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
+                                                                                MinLengthValidator(limit_value=8)])
+    nascimento_data = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa',
+                                       validators=[validate_date_past])
     cpf_numero = models.CharField(verbose_name='CPF', unique=True, validators=[validate_numbers], max_length=11)
     rg_numero = models.CharField(verbose_name='Número RG', max_length=12,
                                  validators=[MinLengthValidator(limit_value=6)])
@@ -155,7 +196,8 @@ class CadastroGrupos(models.Model):
                                                  verbose_name='Terapeuta Auxiliar', blank=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
-    data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True)
+    data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
+                                  validators=[validate_date_past])
     objects = models.Manager()
 
     def __str__(self):
@@ -186,7 +228,7 @@ class ProntuariosGrupos(models.Model):
         verbose_name='Terapeuta Responsável'
     )
     data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
-    data_consulta = models.DateField(verbose_name='Data da Consulta')
+    data_consulta = models.DateField(verbose_name='Data da Consulta', validators=[validate_date_past])
     entrada = models.TextField(verbose_name='Parecer', validators=[MinLengthValidator(limit_value=10)])
     objects = models.Manager()
 
@@ -212,7 +254,7 @@ class PresencasGrupo(models.Model):
                                          on_delete=models.PROTECT,
                                          verbose_name='Grupo nº')
 
-    data = models.DateField(verbose_name='Data', blank=False, null=False)
+    data = models.DateField(verbose_name='Data', blank=False, null=False, validators=[validate_date_past])
     pacientes = models.ManyToManyField(CadastroPacientes)
 
     def __str__(self):
@@ -239,7 +281,7 @@ class Prontuarios(models.Model):
         verbose_name='Terapeuta'
     )
     data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
-    data_consulta = models.DateField(verbose_name='Data da Consulta')
+    data_consulta = models.DateField(verbose_name='Data da Consulta', validators=[validate_date_past])
     entrada = models.TextField(verbose_name='Parecer', validators=[MinLengthValidator(limit_value=10)])
     objects = models.Manager()
 
