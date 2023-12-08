@@ -28,7 +28,8 @@ class Command(BaseCommand):
     def assign_permissions_to_group(self, group, permissions):
         for permission in permissions:
             group.permissions.add(permission)
-            self.stdout.write(self.style.SUCCESS(f"Permissão '{permission}' delegada ao grupo '{group.name}' com sucesso!"))
+            self.stdout.write(self.style.SUCCESS(f"Permissão '{permission}' delegada ao grupo:"
+                                                 f" '{group.name}' com sucesso!"))
 
     def handle(self, *args, **options):
         permission_data = [
@@ -108,7 +109,8 @@ class Command(BaseCommand):
                         model=data['model_name']
                     )
                 except ContentType.DoesNotExist:
-                    self.stderr.write(self.style.ERROR(f"Content type '{data['content_type_name']}' não existe. Pulando..."))
+                    self.stderr.write(self.style.ERROR(f"Content type '{data['content_type_name']}'"
+                                                       f" não existe. Pulando..."))
                     continue
 
                 permission = self.create_permission(

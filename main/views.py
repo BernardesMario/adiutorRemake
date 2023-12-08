@@ -12,8 +12,7 @@ from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaPron
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
                     CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
-from .models import CadastroPacientes, CadastroProfissionais, Prontuarios, CadastroGrupos, ProntuariosGrupos
-# Create your views here.
+from .models import CadastroPacientes, Prontuarios, CadastroGrupos, ProntuariosGrupos, PresencasGrupo
 
 
 @login_required(login_url="/main/login")
@@ -52,17 +51,32 @@ def cadastrar_grupo(request):
 
 @login_required(login_url="/main/login")
 def add_pacs_grupo(request, grupo_id):
+    current_user_terapeuta = request.user.Terapeutas.get()
+    current_group = CadastroGrupos.objects.get(id=grupo_id)
     sucesso = False
     pacientes = CadastroPacientes.objects.filter(grupo__isnull=True)
     pacs_form = AdicionarPacGrupoForm
+    data_grupo = date.today()
     grupo_id = grupo_id
 
     if request.method == "POST":
         grupo = grupo_id
         selected_items = request.POST.getlist('selected_items')
-        CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo, modalidade_atendimento=1)
 
         if pacs_form.is_valid:
+            CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo, modalidade_atendimento=1,
+                                                                           terapeuta=current_user_terapeuta)
+
+            for paciente in selected_items:
+                entrada_prontuario_individual = Prontuarios(
+                    numero=paciente,
+                    autor=current_user_terapeuta,
+                    data_consulta=data_grupo,
+                    entrada= f"Paciente {paciente.nome} foi adicionado ao grupo {current_group.label} "
+                             f" {current_group.numero} por {current_user_terapeuta} em {data_grupo}."
+                )
+                entrada_prontuario_individual.save()
+
             sucesso = True
 
     context = {
@@ -80,10 +94,20 @@ def index(request):
     current_terapeuta_pacientes = CadastroPacientes.objects.filter(terapeuta_id=current_user_terapeuta)
     current_terapeuta_grupos = CadastroGrupos.objects.filter(terapeuta_responsavel_id=current_user_terapeuta)
 
+    active_pacientes = current_terapeuta_pacientes.filter(desligado=False)
+    inactive_pacientes = current_terapeuta_pacientes.filter(desligado=True)
+
+    active_grupos = current_terapeuta_grupos.filter(desligado=False)
+    inactive_grupos = current_terapeuta_grupos.filter(desligado=True)
+
     context = {
         'current_user': current_user_terapeuta,
         'pacientes': current_terapeuta_pacientes,
         'grupos': current_terapeuta_grupos,
+        'active_pacientes': active_pacientes,
+        'inactive_pacientes': inactive_pacientes,
+        'active_grupos': active_grupos,
+        'inactive_grupos': inactive_grupos,
     }
     return render(request, 'index.html', context)
 
@@ -164,7 +188,6 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
     pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=current_grupo.id)
-
     ultima_entrada = ProntuariosGrupos.objects.filter(
         numero=current_grupo.prontuario_grupo_numero
     ).order_by('-data_consulta').first()
@@ -188,21 +211,31 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
 
                 new_entry = entrada_form.save(commit=False)
                 new_entry.numero_id = current_grupo.prontuario_grupo_numero
-
                 new_entry.autor = current_user_terapeuta
                 new_entry.save()
+                selected_items = request.POST.getlist('selected_items')
+                pacs_presentes = CadastroPacientes.objects.filter(id__in=selected_items)
 
-                for paciente in pacientes_grupo:
+                for paciente in pacs_presentes:
                     entrada_prontuario_individual = Prontuarios(
-                            numero=paciente,
-                            autor=current_user_terapeuta,
-                            data_consulta=new_entry.data_consulta,
-                            entrada=new_entry.entrada
-                        )
+                        numero=paciente,
+                        autor=current_user_terapeuta,
+                        data_consulta=new_entry.data_consulta,
+                        entrada=new_entry.entrada
+                    )
                     entrada_prontuario_individual.save()
+
+                presencas_grupo_entry = PresencasGrupo(
+                    consulta=new_entry,
+                    grupo_prontuario=current_grupo,
+                    data=new_entry.data_consulta,
+                )
+                presencas_grupo_entry.save()
+                presencas_grupo_entry.pacientes.set(pacs_presentes)
 
     context = {
         'form': entrada_form,
+        'pacientes': pacientes_grupo,
         'sucesso': sucesso,
     }
 
@@ -319,15 +352,29 @@ def desligar_grupo(request, prontuario_grupo_numero):
 def transferir_paciente(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     transfer_form = PacienteTransferenciaForm()
+    current_user_terapeuta = request.user.Terapeutas.get()
+    data_transfer = date.today()
     sucesso = False
 
     if request.method == 'POST':
         transfer_form = PacienteTransferenciaForm(request.POST)
 
         if transfer_form.is_valid():
+            entrada_text = transfer_form.cleaned_data.get('entrada_text')
             novo_terapeuta = transfer_form.cleaned_data['novo_terapeuta']
             paciente.terapeuta = novo_terapeuta
             paciente.save()
+
+            def save_transfer(commit=True):
+                Prontuarios.objects.create(numero=paciente,
+                                           autor=current_user_terapeuta,
+                                           data_consulta=data_transfer,
+                                           entrada=f"Paciente {paciente.nome} foi transferido por "
+                                                   f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
+                                                   f"\n Motivo: {entrada_text}", )
+                return paciente
+
+            save_transfer()
             sucesso = True
 
     context = {
@@ -342,6 +389,8 @@ def transferir_paciente(request, prontuario_numero):
 # adicionar permissão
 def transferir_grupo(request, prontuario_grupo_numero):
     grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_user_terapeuta = request.user.Terapeutas.get()
+    data_transfer = date.today()
     transfer_form = GrupoTrasferenciaForm()
     sucesso = False
 
@@ -349,9 +398,27 @@ def transferir_grupo(request, prontuario_grupo_numero):
         transfer_form = GrupoTrasferenciaForm(request.POST)
 
         if transfer_form.is_valid():
+            entrada_text = transfer_form.cleaned_data.get('entrada_text')
             novo_terapeuta = transfer_form.cleaned_data['novo_terapeutas']
             grupo.terapeuta_responsavel = novo_terapeuta
             grupo.save()
+
+            def save_transfer_grp(commit=True):
+                pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=grupo.id)
+                for paciente in pacientes_grupo:
+                    paciente.terapeuta = novo_terapeuta
+                    paciente.save()
+                    Prontuarios.objects.create(numero=paciente,
+                                               autor=current_user_terapeuta,
+                                               data_consulta=data_transfer,
+                                               entrada=f"Grupo {grupo.label} "
+                                                       f"prontuário {grupo.prontuario_grupo_numero} "
+                                                       f"foi transferido por {current_user_terapeuta} "
+                                                       f"para {novo_terapeuta} em {data_transfer}."
+                                                       f"\n Motivo: {entrada_text}", )
+                return pacientes_grupo
+
+            save_transfer_grp()
             sucesso = True
 
     context = {

@@ -13,12 +13,11 @@
 
 {% block content %}
 <h1>Bem Vindo {{ request.user.username }} ! </h1>
-    <p> <a href="{% url 'main:perfil' %}"> Informações Pessoais </a></p>
     {% csrf_token %}
 
     <ul>
         <h2> Pacientes: </h2>
-        {% for paciente in pacientes %}
+        {% for paciente in active_pacientes %}
             <li>
                 {{ paciente.nome }} - {{ paciente.prontuario_numero }}
                 <a href="{% url 'main:add_entrada' prontuario_numero=paciente.prontuario_numero %}"> Registrar Nova Consulta </a> /
@@ -31,23 +30,53 @@
         {% empty %}
             <li>No entries found.</li>
         {% endfor %}
+
+        <h2> Pacientes Desligados: </h2>
+        {% for paciente in inactive_pacientes %}
+            <li>
+                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                <a href="{% url 'main:prontuario' prontuario_numero=paciente.prontuario_numero %}"> Ver Histórico </a> /
+                <a href="{% url 'main:desligamento' prontuario_numero=paciente.prontuario_numero %}"> Desligar </a> /
+                <a href="{% url 'main:dadospac' prontuario_numero=paciente.prontuario_numero %}"> Detalhes </a>
+
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
     </ul>
     <ul>
-        <h2> Grupos: </h2>
-        {% for grupo in grupos %}
+        <h2> Grupos:
+</h2>
+        <br> <a href="{% url 'main:add-grupo' %}"> Criar Novo Grupo </a>
+
+        {% for grupo in active_grupos %}
             <li>
                 {{ grupo.label }} - {{ grupo.prontuario_grupo_numero }}
-                <a href="{% url 'main:add-entrada-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Registrar Nova Consulta </a> /
+                {% if grupo.prontuario_grupo_numero %}
+                    <a href="{% url 'main:add-entrada-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Registrar Nova Consulta </a> /
+                    <a href="{% url 'main:grupo-prontuario' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Ver Histórico </a> /
+                    <a href="{% url 'main:transfer-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Transferir </a> /
+                    <a href="{% url 'main:deslig-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Desligar </a> /
+                    <a href="{% url 'main:dados-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Detalhes </a>
+                {% else %}
+                <li> Não Encontrado </li>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
+
+         <h2> Grupos Finalizados: </h2>
+        {% for grupo in inactive_grupos %}
+            <li>
+                {{ grupo.label }} - {{ grupo.prontuario_grupo_numero }}
                 <a href="{% url 'main:grupo-prontuario' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Ver Histórico </a> /
-                <a href="{% url 'main:transfer-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Transferir </a> /
-                <a href="{% url 'main:deslig-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Desligar </a> /
                 <a href="{% url 'main:dados-grupo' prontuario_grupo_numero=grupo.prontuario_grupo_numero %}"> Detalhes </a>
 
             </li>
         {% empty %}
             <li>No entries found.</li>
         {% endfor %}
-        <a href="{% url 'main:add-grupo' %}"> Criar Novo Grupo </a>
 
     </ul>
 {% endblock %}

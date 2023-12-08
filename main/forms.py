@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from datetime import date
-from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
+from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
 from accounts.models import CustomUser
 
@@ -238,6 +238,12 @@ class PacienteTransferenciaForm(forms.ModelForm):
         required=True
     )
 
+    entrada_text = forms.CharField(
+        label='Motivo',
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=True
+    )
+
     class Meta:
         model = CadastroPacientes
         fields = ['novo_terapeuta']
@@ -247,6 +253,12 @@ class GrupoTrasferenciaForm(forms.ModelForm):
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
+        required=True
+    )
+
+    entrada_text = forms.CharField(
+        label='Motivo',
+        widget=forms.Textarea(attrs={'rows': 3}),
         required=True
     )
 

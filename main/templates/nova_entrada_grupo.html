@@ -46,6 +46,23 @@
     <div class="form-group">
         {% bootstrap_form form %}
     </div>
+
+    <table>
+    <thead>
+      <tr>
+        <th>Presente / </th>
+        <th>Nome paciente</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for paciente in pacientes %}
+        <tr>
+          <td><input type="checkbox" name="selected_items" value="{{ paciente.id }}"></td>
+          <td>{{ paciente.nome }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
     <button type="submit" class="btn btn-primary btn-block">
         Salvar
     </button>
