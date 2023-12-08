@@ -29,16 +29,26 @@ class TerapeutaRegistrationForm(UserCreationForm):
 class CadastroProfissionaisForm(forms.ModelForm):
 
     nome = forms.CharField(validators=[validate_letters])
+    endereco_rua = forms.CharField(validators=[validate_letters])
+    endereco_bairro = forms.CharField(validators=[validate_letters])
+    cidade = forms.CharField(validators=[validate_letters])
     unimed_codigo = forms.CharField(validators=[validate_numbers])
     conselho_codigo = forms.CharField(validators=[validate_numbers])
     rg_numero = forms.CharField(validators=[validate_numbers])
     cpf_numero = forms.CharField(validators=[validate_numbers])
     endereco_numero = forms.CharField(validators=[validate_numbers])
+    cep_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
         model = CadastroProfissionais
-        fields = ['nome', 'conselho_codigo', 'unimed_codigo', 'cpf_numero', 'rg_numero',
-                  'endereco_rua', 'endereco_bairro', 'endereco_complemento', 'endereco_numero', 'rg_emissor']
+        fields = ['nome', 'nascimento_data', 'conselho_codigo', 'pos_grad_status', 'unimed_codigo', 'cpf_numero',
+                  'rg_numero', 'rg_emissor', 'endereco_rua', 'endereco_bairro', 'endereco_complemento',
+                  'endereco_numero', 'cidade', 'cep_numero']
+        widgets = {
+            'nascimento_data': forms.DateInput(
+                attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
+            ),
+        }
 
 
 class CadastroPacienteForm(forms.ModelForm):
@@ -64,7 +74,7 @@ class CadastroPacienteForm(forms.ModelForm):
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
 
     nome = forms.CharField(validators=[validate_letters])
-    #responsavel_legal = forms.CharField(validators=[validate_letters])
+    # responsavel_legal = forms.CharField(validators=[validate_letters])
     cpf_numero = forms.CharField(validators=[validate_numbers])
     carteirinha_convenio = forms.CharField(validators=[validate_numbers])
     telefone_numero = forms.CharField(validators=[validate_numbers])
@@ -151,6 +161,15 @@ class AdicionarPacGrupoForm(forms.ModelForm):
 
 
 class CadastrarConvenios(forms.ModelForm):
+    cnpj_numero = forms.CharField(validators=[validate_numbers])
+    endereco_numero = forms.CharField(validators=[validate_numbers])
+    cep_numero = forms.CharField(validators=[validate_numbers])
+    telefone_numero = forms.CharField(validators=[validate_numbers])
+    endereco_rua = forms.CharField(validators=[validate_letters])
+    endereco_bairro = forms.CharField(validators=[validate_letters])
+    cidade = forms.CharField(validators=[validate_letters])
+    responsavel_contato = forms.CharField(validators=[validate_letters])
+
     class Meta:
         model = ConveniosAceitos
         fields = '__all__'
@@ -188,6 +207,12 @@ class PacienteDesligamentoForm(forms.ModelForm):
             )
         }
 
+    entrada_text = forms.CharField(
+        label='Motivo',
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=True
+    )
+
 
 class GrupoDesligamentoForm(forms.ModelForm):
     class Meta:
@@ -198,6 +223,12 @@ class GrupoDesligamentoForm(forms.ModelForm):
                 attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
             )
         }
+
+    entrada_text = forms.CharField(
+        label='Motivo',
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=True
+    )
 
 
 class PacienteTransferenciaForm(forms.ModelForm):

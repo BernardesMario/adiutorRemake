@@ -42,7 +42,6 @@ def cadastrar_grupo(request):
 
         redirect_url = reverse('main:add-pac-grupo', args=[str(new_group.id)])
         return redirect(redirect_url)
-        # return redirect('/main/add_pac_grp', grupo_id=new_group.id)
 
     context = {
         'form': grupo_form,
@@ -61,7 +60,7 @@ def add_pacs_grupo(request, grupo_id):
     if request.method == "POST":
         grupo = grupo_id
         selected_items = request.POST.getlist('selected_items')
-        CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo)
+        CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo, modalidade_atendimento=1)
 
         if pacs_form.is_valid:
             sucesso = True
@@ -169,6 +168,7 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     ultima_entrada = ProntuariosGrupos.objects.filter(
         numero=current_grupo.prontuario_grupo_numero
     ).order_by('-data_consulta').first()
+
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
 
     entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
@@ -213,6 +213,7 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
 @permission_required('main.deslig_pac', raise_exception=True)
 def desligar_paciente(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+    current_user_terapeuta = request.user.Terapeutas.get()
     desligamento_form = PacienteDesligamentoForm()
 
     ultima_entrada = Prontuarios.objects.filter(numero=prontuario_numero).order_by('-data_consulta').first()
@@ -228,12 +229,27 @@ def desligar_paciente(request, prontuario_numero):
             # Validando se não houveram consultas posteriores a data de desligamento
             if not data_final or (ultima_entrada_data and data_final < ultima_entrada_data):
                 desligamento_form.add_error('data_final',
-                                            'Paciente teve consultas posteriores a data de desligamento informada!')
+                                            'Paciente teve consultas posteriores a data informada!')
 
             if not desligamento_form.errors:
-                paciente.desligado = True
-                paciente.data_final = data_final
-                paciente.save()
+                entrada_text = desligamento_form.cleaned_data.get('entrada_text')
+                data_ultima = desligamento_form.cleaned_data.get('data_final')
+
+                def save_desligamento(commit=True):
+                    ficha_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+                    ficha_paciente.desligado = True
+                    ficha_paciente.save()
+
+                    Prontuarios.objects.create(numero=paciente,
+                                               autor=current_user_terapeuta,
+                                               data_consulta=data_final,
+                                               entrada=f"Paciente {ficha_paciente.nome} foi desligado por "
+                                                       f"{current_user_terapeuta}"
+                                                       f" em {data_ultima}. "
+                                                       f"\n Motivo: {entrada_text}", )
+                    return ficha_paciente
+
+                save_desligamento()
                 sucesso = True
 
     context = {
@@ -248,6 +264,7 @@ def desligar_paciente(request, prontuario_numero):
 # definir permissão
 def desligar_grupo(request, prontuario_grupo_numero):
     grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+    current_user_terapeuta = request.user.Terapeutas.get()
     desligamento_form = GrupoDesligamentoForm()
 
     ultima_entrada = ProntuariosGrupos.objects.filter(
@@ -267,10 +284,28 @@ def desligar_grupo(request, prontuario_grupo_numero):
                                             'Grupo teve consultas posteriores a data de desligamento informada!')
 
             if not desligamento_form.errors:
-                grupo.desligado = True
-                grupo.data_final = data_final
-                grupo.save()
+                entrada_text = desligamento_form.cleaned_data.get('entrada_text')
+
+                def save_desligamento_grp(commit=True):
+                    pacientes_grupo = CadastroPacientes.objects.filter(grupo_id=grupo.id)
+                    grupo.desligado = True
+                    grupo.data_final = data_final
+                    grupo.save()
+
+                    for paciente in pacientes_grupo:
+                        Prontuarios.objects.create(numero=paciente,
+                                                   autor=current_user_terapeuta,
+                                                   data_consulta=data_final,
+                                                   entrada=f"Grupo {grupo.label} "
+                                                           f"prontuário {grupo.prontuario_grupo_numero} "
+                                                           f"foi desligado por {current_user_terapeuta} "
+                                                           f"em {data_final}."
+                                                           f"\n Motivo: {entrada_text}", )
+                    return pacientes_grupo
+
+                save_desligamento_grp()
                 sucesso = True
+
     context = {
         'form': desligamento_form,
         'sucesso': sucesso,

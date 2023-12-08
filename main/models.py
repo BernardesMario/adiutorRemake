@@ -79,14 +79,14 @@ class CadastroPacientes(models.Model):
                                        validators=[MinLengthValidator(limit_value=3)])
     endereco_numero = models.CharField(verbose_name='Número', max_length=7, validators=[validate_numbers])
     endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100,
-                                             validators=[MinLengthValidator(limit_value=4)])
+                                            validators=[MinLengthValidator(limit_value=4)])
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
                                        validators=[validate_numbers, MinLengthValidator(limit_value=11)])
     cidade = models.CharField(verbose_name='Cidade', max_length=100, validators=[validate_letters,
-                                                                                MinLengthValidator(limit_value=3)])
+                                                                                 MinLengthValidator(limit_value=3)])
     cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
                                                                                 MinLengthValidator(limit_value=8)])
-    email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
+    email = models.EmailField(verbose_name='E-mail')
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
 
@@ -119,11 +119,11 @@ class ConveniosAceitos(models.Model):
                                                                                 MinLengthValidator(limit_value=3)])
     cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
                                                                                 MinLengthValidator(limit_value=8)])
-    responsavel_contato = models.CharField(verbose_name='Contato do Resposável', max_length=50,
-                                           validators=[validate_numbers, MinLengthValidator(limit_value=3)])
+    responsavel_contato = models.CharField(verbose_name='Nome do Resposável', max_length=50,
+                                           validators=[validate_letters, MinLengthValidator(limit_value=3)])
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
                                        validators=[validate_numbers, MinLengthValidator(limit_value=11)])
-    email = models.EmailField(verbose_name='E-mail', null=True, blank=True)
+    email = models.EmailField(verbose_name='E-mail para Contato')
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
 
@@ -143,6 +143,15 @@ class CadastroProfissionais(models.Model):
                             unique=True, editable=True, validators=[validate_letters])
     conselho_codigo = models.CharField(verbose_name='CRP', max_length=5, unique=True,
                                        editable=True, validators=[validate_numbers])
+    STATUS_POS_CHOICES = (
+        (0, 'Nível 1 - Incompleto'),
+        (1, 'Nível 1 - Completo'),
+        (2, 'Nível 2 - Incompleto'),
+        (3, 'Nível 2 - Completo'),
+        (4, 'Nível 3 - Incompleto'),
+        (5, 'Nível 3 - Completo'),
+    )
+    pos_grad_status = models.IntegerField(verbose_name='Status Pós', choices=STATUS_POS_CHOICES, default=0)
     unimed_codigo = models.CharField(verbose_name='Número cadastro Unimed', max_length=6,
                                      unique=True, editable=True, validators=[validate_numbers])
     email = models.EmailField(verbose_name='Email', editable=True)
@@ -294,3 +303,21 @@ class Prontuarios(models.Model):
         permissions = [
             ('add_entry', 'Adicionar entradas em prontuários (Terapeutas)')
         ]
+
+
+class HistoricoAcademico(models.Model):
+    profissonal = models.ForeignKey('CadastroProfissionais',
+                                    on_delete=models.PROTECT,
+                                    verbose_name='Terapeuta')
+    curso = models.CharField(verbose_name='Curso', max_length=30, validators=[validate_letters])
+    instituicao = models.CharField(verbose_name='Instituição', max_length=50, validators=[validate_letters])
+    ano_conclusao = models.CharField(verbose_name='Ano de Conclusão', max_length=4,
+                                     validators=[validate_numbers, MinLengthValidator(limit_value=4)])
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'{self.curso} - {self.instituicao}'
+
+    class Meta:
+        verbose_name = 'Histórico Acadêmico'
+        verbose_name_plural = 'Históricos Acadêmicos'

@@ -86,7 +86,15 @@ class Command(BaseCommand):
                 'permission_codename': 'deslig_group',
                 'permission_name': 'Desligar Grupo (Terapeutas)',
             },
-            # Adiciona aqui novas permissões
+            # Adicione aqui novas permissões
+            '''
+            {
+                'content_type_name': 'APP',
+                'model_name': 'MODEL',
+                'permission_codename': 'CODENAME',
+                'permission_name': 'NAME',
+            },
+            '''
         ]
 
         try:
