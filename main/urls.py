@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import permission_required
 from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
-                    novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo,
+                    novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
                     add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo)
 
 
@@ -27,6 +27,7 @@ urlpatterns = [
          list_entradas, name='prontuario'
          ),
     path('index/', index, name='index'),
+    path('indice_cadastros', index_perfil, name='index-perfil'),
     path('usuario/',
          permission_required('main.add_terapeuta')(cadastro_user_terapeuta),
          name='usuario'

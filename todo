@@ -7,9 +7,10 @@
 # implement 2FA - fazer
 # verificar alteração de dados de usuários - permissão administrativa
 # definir ordering
-# Criar listagens distintas para Pacientes e Grupos ativos e Inativos + Bloqueio de dados
+# Pacientes Inativos  Bloqueio de dados
 # Adicionar pacientes para grupos já existentes
 # Adicionar/Remover membros de grupos já existentes
+# Religar Pacientes inativos (Retorno)
 # Criar Permissões [ver prontuario grupo, delisgar grupo, transferir grupo]
 # * Validação de entrada dupla prontuario - complementar entrada já feita, não aceitar novas na mesma data
 # * Implementar variaveis de ambiente (os.environ) para Email Config em settings

@@ -39,6 +39,13 @@ class CadastroProfissionaisForm(forms.ModelForm):
     endereco_numero = forms.CharField(validators=[validate_numbers])
     cep_numero = forms.CharField(validators=[validate_numbers])
 
+    def clean_nascimento(self):
+        nascimento = self.cleaned_data.get('nascimento_data')
+        hoje = date.today()
+        if hoje < nascimento:
+            raise forms.ValidationError('Idade Inválida')
+        return nascimento
+
     class Meta:
         model = CadastroProfissionais
         fields = ['nome', 'nascimento_data', 'conselho_codigo', 'pos_grad_status', 'unimed_codigo', 'cpf_numero',
@@ -176,6 +183,13 @@ class CadastrarConvenios(forms.ModelForm):
 
 
 class EntradaProntuario(forms.ModelForm):
+    def clean_data_consulta(self):
+        data_consulta = self.cleaned_data.get('data_consulta')
+        hoje = date.today()
+        if hoje < data_consulta:
+            raise forms.ValidationError('Idade Inválida')
+        return data_consulta
+
     class Meta:
         model = Prontuarios
         fields = ['data_consulta', 'entrada']
@@ -187,6 +201,13 @@ class EntradaProntuario(forms.ModelForm):
 
 
 class EntradaProntuarioGrupoForm(forms.ModelForm):
+    def clean_data_consulta(self):
+        data_consulta = self.cleaned_data.get('data_consulta')
+        hoje = date.today()
+        if hoje < data_consulta:
+            raise forms.ValidationError('Idade Inválida')
+        return data_consulta
+
     class Meta:
         model = ProntuariosGrupos
         fields = ['data_consulta', 'entrada']

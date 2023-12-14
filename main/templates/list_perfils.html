@@ -1,0 +1,40 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Cadastro Geral</title>
+</head>
+<body>
+<div class="page-container">
+
+{% block content %}
+<h1>Bem Vindo {{ request.user.username }} ! </h1>
+    {% csrf_token %}
+    <ul>
+        <h2> Pacientes: </h2>
+        {% for paciente in lis-pacientes %}
+            <li>
+                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                <a href="{% url 'main:mod_info_pac' prontuario_numero=paciente.prontuario_numero %}"> Modificar </a> <br>
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
+    <ul>
+        <h2> Terapeutas: </h2>
+        {% for terapeuta in lis-terapeutas %}
+            <li>
+                {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }}
+                <a href="{% url 'main:mod_info_prof' id=terapeuta.id %}"> Modificar </a> <br>
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

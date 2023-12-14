@@ -12,7 +12,8 @@ from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaPron
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
                     CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
-from .models import CadastroPacientes, Prontuarios, CadastroGrupos, ProntuariosGrupos, PresencasGrupo
+from .models import (CadastroPacientes, Prontuarios, CadastroGrupos,
+                     ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
 
 
 @login_required(login_url="/main/login")
@@ -67,15 +68,21 @@ def add_pacs_grupo(request, grupo_id):
             CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo, modalidade_atendimento=1,
                                                                            terapeuta=current_user_terapeuta)
 
-            for paciente in selected_items:
-                entrada_prontuario_individual = Prontuarios(
-                    numero=paciente,
-                    autor=current_user_terapeuta,
-                    data_consulta=data_grupo,
-                    entrada= f"Paciente {paciente.nome} foi adicionado ao grupo {current_group.label} "
-                             f" {current_group.numero} por {current_user_terapeuta} em {data_grupo}."
-                )
-                entrada_prontuario_individual.save()
+            def save_pac_grp(selected_items, current_group, commit=True):
+                pacs_add = CadastroPacientes.objects.filter(id__in=selected_items)
+                grupo_add = current_group
+                for paciente in pacs_add:
+                    grupo = grupo_add
+                    entrada_prontuario_individual = Prontuarios(
+                        numero=paciente,
+                        autor=current_user_terapeuta,
+                        data_consulta=data_grupo,
+                        entrada=str(f"Paciente {paciente.nome}  foi adicionado ao grupo {current_group.label} "
+                                    f" {grupo.prontuario_grupo_numero} por {current_user_terapeuta} em {data_grupo}.")
+                    )
+                    entrada_prontuario_individual.save()
+
+            save_pac_grp(selected_items, current_group)
 
             sucesso = True
 
@@ -466,7 +473,36 @@ def cadastro_user_terapeuta(request):
 
 
 @login_required(login_url="/main/login")
-def informacoes_terapeuta(request):
+def index_perfil(request):
+    pacientes = CadastroPacientes.objects.all
+    terapeutas = CadastroProfissionais.objects.all
+
+    context = {
+        'lis_pacientes': pacientes,
+        'list_terapeutas': terapeutas
+    }
+
+    return render(request, 'list_perfils.html', context)
+
+
+'''
+@login_required(login_url="/main/login")
+def informacoes_pacientes(request,prontuario_numero):
+    current_pac = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+    perfil_form = PLACEHOLDER-FOR-FORM
+    sucesso = False
+
+    if request.method == 'POST':
+        perfil_form = (request.POST)
+
+        if perfil_form.is_valid():
+    pass
+'''
+
+
+# ALTERAR PARA USER-ADMINs
+@login_required(login_url="/main/login")
+def informacoes_terapeuta(request, id):
     current_user_id = request.user.id
     perfil_form = CadastroProfissionaisForm
     sucesso = False
