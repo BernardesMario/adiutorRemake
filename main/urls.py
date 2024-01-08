@@ -4,7 +4,7 @@ from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
-                    add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo)
+                    add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, relig_pac)
 
 
 app_name = 'main'
@@ -20,6 +20,8 @@ urlpatterns = [
          permission_required('main.deslig_pac')(desligar_paciente),
          name='desligamento'
          ),
+    path('reativar/<str:prontuario_numero>/',
+         relig_pac, name='religamento'),
     path('transfer/<str:prontuario_numero>/',
          permission_required('main.transfer_pac')(transferir_paciente),
          name='transferencia'),

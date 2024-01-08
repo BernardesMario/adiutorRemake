@@ -16,18 +16,27 @@
 <h1>Bem Vindo {{ request.user.username }} ! </h1>
     {% csrf_token %}
     <ul>
-        <h2> Pacientes: </h2>
-        {% for paciente in lis-pacientes %}
+        <h2> Pacientes Ativos: </h2>
+        {% for paciente in lis_pacientes_ativos %}
             <li>
                 {{ paciente.nome }} - {{ paciente.prontuario_numero }}
-                <a href="{% url 'main:mod_info_pac' prontuario_numero=paciente.prontuario_numero %}"> Modificar </a> <br>
+            </li>
+        {% empty %}
+            <li>No entries found.</li>
+        {% endfor %}
+
+        <h2> Pacientes Inativos: </h2>
+        {% for paciente in lis_pacientes_inativos %}
+            <li>
+                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                <a href="{% url 'main:religamento' prontuario_numero=paciente.prontuario_numero %}"> Reativar </a> <br>
             </li>
         {% empty %}
             <li>No entries found.</li>
         {% endfor %}
     <ul>
         <h2> Terapeutas: </h2>
-        {% for terapeuta in lis-terapeutas %}
+        {% for terapeuta in lis_terapeutas %}
             <li>
                 {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }}
                 <a href="{% url 'main:mod_info_prof' id=terapeuta.id %}"> Modificar </a> <br>
@@ -36,5 +45,6 @@
             <li>No entries found.</li>
         {% endfor %}
     </ul>
+        {% endblock %}
 </body>
 </html>

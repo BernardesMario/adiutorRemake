@@ -1,8 +1,10 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 from datetime import date
+import re
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
 from accounts.models import CustomUser
@@ -80,12 +82,28 @@ class CadastroPacienteForm(forms.ModelForm):
             if idade_paciente < 18 and not responsavel_legal:
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
 
+    def clean_responsavel(self):
+        cleaned_data = super().clean()
+        responsavel = cleaned_data.get('responsavel_legal')
+
+        def validate_name(value):
+            if not re.match(r"^[^\d]+$", str(value)):
+                raise ValidationError("Este campo pode conter apenas letras")
+
+        if responsavel:
+            validate_name(responsavel)
+        else:
+            pass
+
     nome = forms.CharField(validators=[validate_letters])
-    # responsavel_legal = forms.CharField(validators=[validate_letters])
     cpf_numero = forms.CharField(validators=[validate_numbers])
     carteirinha_convenio = forms.CharField(validators=[validate_numbers])
     telefone_numero = forms.CharField(validators=[validate_numbers])
     endereco_numero = forms.CharField(validators=[validate_numbers])
+    endereco_rua = forms.CharField(validators=[validate_letters])
+    endereco_bairro = forms.CharField(validators=[validate_letters])
+    cidade = forms.CharField(validators=[validate_letters])
+    cep_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
         model = CadastroPacientes
@@ -253,6 +271,7 @@ class GrupoDesligamentoForm(forms.ModelForm):
 
 
 class PacienteTransferenciaForm(forms.ModelForm):
+
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -271,6 +290,7 @@ class PacienteTransferenciaForm(forms.ModelForm):
 
 
 class GrupoTrasferenciaForm(forms.ModelForm):
+
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -286,3 +306,40 @@ class GrupoTrasferenciaForm(forms.ModelForm):
     class Meta:
         model = CadastroGrupos
         fields = ['novo_terapeuta']
+
+
+class ReligarPacienteForm(forms.ModelForm):
+
+    novo_terapeuta = forms.ModelChoiceField(
+        queryset=CadastroProfissionais.objects.all(),
+        label='Novo Terapeuta',
+        required=True
+    )
+    data_retorno = forms.DateField(
+        label='Data Retorno',
+        widget=forms.DateInput(
+                attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
+            ),
+        required=True
+    )
+
+    class Meta:
+        model = CadastroPacientes
+        fields = ['novo_terapeuta', 'data_retorno']
+        widgets = {
+            'data_retorno': forms.DateInput(
+                attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
+            )
+        }
+
+
+class UpdatePacienteForm(forms.ModelForm):
+    carteirinha_convenio = forms.CharField(validators=[validate_numbers])
+    telefone_numero = forms.CharField(validators=[validate_numbers])
+    endereco_numero = forms.CharField(validators=[validate_numbers])
+    cep_numero = forms.CharField(validators=[validate_numbers])
+
+    class Meta:
+        model = CadastroPacientes
+        fields = ('convenio', 'carteirinha_convenio', 'enderco_rua', 'endereco_bairro', 'endereco_bairro',
+                  'endereco_numero', 'endereco_complemento', 'telefone_numero', 'cidade', 'cep_numero', 'email')

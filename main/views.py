@@ -9,8 +9,8 @@ from django.template.loader import render_to_string
 from datetime import date
 from verify_email.email_handler import send_verification_email
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
-                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
-                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm,
+                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm, UpdatePacienteForm,
+                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
 from .models import (CadastroPacientes, Prontuarios, CadastroGrupos,
                      ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
@@ -474,11 +474,13 @@ def cadastro_user_terapeuta(request):
 
 @login_required(login_url="/main/login")
 def index_perfil(request):
-    pacientes = CadastroPacientes.objects.all
+    pacientes_ativos = CadastroPacientes.objects.filter(desligado=False)
+    pacientes_inativos = CadastroPacientes.objects.filter(desligado=True)
     terapeutas = CadastroProfissionais.objects.all
 
     context = {
-        'lis_pacientes': pacientes,
+        'lis_pacientes_ativos': pacientes_ativos,
+        'lis_pacientes_inativos': pacientes_inativos,
         'list_terapeutas': terapeutas
     }
 
@@ -615,7 +617,6 @@ def detalhes_grupo(request, prontuario_grupo_numero):
     }
 
     return render(request, 'grupo_detalhes.html', context)
-    pass
 
 
 @login_required(login_url="/main/login")
@@ -625,3 +626,106 @@ def list_consultas(request):
 
 def redirect_page(request):
     pass
+
+
+@login_required(login_url="/main/login")
+def relig_pac(request, prontuario_numero):
+    current_pac = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+    relig_form = ReligarPacienteForm
+    sucesso = False
+
+    if request.method == 'POST':
+        relig_form = ReligarPacienteForm(request.POST)
+
+        if relig_form.is_valid():
+            novo_terapeuta = relig_form.cleaned_data['novo_terapeuta']
+            data_religamento = relig_form.cleaned_data['data_retorno']
+            current_pac.terapeuta = novo_terapeuta
+            current_pac.desligado = False
+            current_pac.modalidade_atendimento = 0
+            current_pac.save()
+
+            def save_relig(commit=True):
+                Prontuarios.objects.create(numero=current_pac,
+                                           autor=novo_terapeuta,
+                                           data_consulta=data_religamento,
+                                           entrada=f"Paciente {current_pac.nome} reiniciou o processo no dia"
+                                                   f"{data_religamento} com  {novo_terapeuta}."
+                                           )
+                return current_pac
+
+            save_relig()
+            sucesso = True
+
+            redirect_url = reverse('main:add-pac-grupo', args=[str(new_group.id)])
+            return redirect(redirect_url)
+
+    context = {
+        'sucesso': sucesso,
+        'form': relig_form
+    }
+
+    return render(request, 'relig_pac.html', context)
+
+
+@login_required(login_url="/main/login")
+def update_pac(request, prontuario_numero):
+    current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+    update_form = UpdatePacienteForm
+    sucesso = False
+
+    if request.method == 'POST':
+        update_form = UpdatePacienteForm(request.POST)
+
+        if update_form.is_valid():
+            if 'convenio' in update_form.cleaned_data:
+                current_paciente.convenio = update_form.cleaned_data.get('convenio')
+                current_paciente.save()
+
+            elif 'carteirinha_convenio' in update_form.cleaned_data:
+                current_paciente.carteirinha_convenio = update_form.cleaned_data.get('carteirinha_convenio')
+                current_paciente.save()
+
+            elif 'endereco_rua' in update_form.cleaned_data:
+                current_paciente.endereco_rua = update_form.cleaned_data.get('endereco_rua')
+                current_paciente.save()
+
+            elif 'endereco_bairro' in update_form.cleaned_data:
+                current_paciente.endereco_bairro = update_form.cleaned_data.get('endereco_bairro')
+                current_paciente.save()
+
+            elif 'endereco_numero' in update_form.cleaned_data:
+                current_paciente.endereco_numero = update_form.cleaned_data.get('endereco_numero')
+                current_paciente.save()
+
+            elif 'endereco_complemento' in update_form.cleaned_data:
+                current_paciente.endereco_complemento = update_form.cleaned_data.get('endereco_complemento')
+                current_paciente.save()
+
+            elif 'telefone_numero' in update_form.cleaned_data:
+                current_paciente.telefone_numero = update_form.cleaned_data.get('telefone_numero')
+                current_paciente.save()
+
+            elif 'cidade' in update_form.cleaned_data:
+                current_paciente.cidade = update_form.cleaned_data.get('cidade')
+                current_paciente.save()
+
+            elif 'cep_numero' in update_form.cleaned_data:
+                current_paciente.cep_numero = update_form.cleaned_data.get('cep_numero')
+                current_paciente.save()
+
+            elif 'email' in update_form.cleaned_data:
+                current_paciente.email = update_form.cleaned_data.get('email')
+                current_paciente.save()
+
+            else:
+                pass
+            sucesso = True
+
+    context = {
+        'sucesso': sucesso,
+        'paciente': current_paciente,
+        'form': update_form
+    }
+
+    return render(request, 'update_pac.html', context)

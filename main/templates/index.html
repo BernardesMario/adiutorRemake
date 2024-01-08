@@ -36,7 +36,6 @@
             <li>
                 {{ paciente.nome }} - {{ paciente.prontuario_numero }}
                 <a href="{% url 'main:prontuario' prontuario_numero=paciente.prontuario_numero %}"> Ver Histórico </a> /
-                RELIGAR
                 <a href="{% url 'main:dadospac' prontuario_numero=paciente.prontuario_numero %}"> Detalhes </a>
 
             </li>
