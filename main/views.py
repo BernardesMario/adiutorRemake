@@ -657,8 +657,8 @@ def relig_pac(request, prontuario_numero):
             save_relig()
             sucesso = True
 
-            redirect_url = reverse('main:add-pac-grupo', args=[str(new_group.id)])
-            return redirect(redirect_url)
+            # redirect_url = reverse('main:add-pac-grupo', args=[str(new_group.id)])
+            # return redirect(redirect_url)
 
     context = {
         'sucesso': sucesso,

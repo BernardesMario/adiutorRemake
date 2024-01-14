@@ -341,5 +341,5 @@ class UpdatePacienteForm(forms.ModelForm):
 
     class Meta:
         model = CadastroPacientes
-        fields = ('convenio', 'carteirinha_convenio', 'enderco_rua', 'endereco_bairro', 'endereco_bairro',
+        fields = ('convenio', 'carteirinha_convenio', 'endereco_rua', 'endereco_bairro', 'endereco_bairro',
                   'endereco_numero', 'endereco_complemento', 'telefone_numero', 'cidade', 'cep_numero', 'email')
