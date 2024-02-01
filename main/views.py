@@ -14,10 +14,17 @@ from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaPron
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
 from .models import (CadastroPacientes, Prontuarios, CadastroGrupos,
                      ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
+from .services.terapeutas_service import get_terapeutas_group, get_administrativo_group
+from .services.users_service import redirect_logged_user_to_home, redirect_user_to_otp_confirmation
+from .services.pacientes_services import (filter_inactive_pacs_by_terapeuta, filter_active_pacs_by_terapeuta,
+                                          filter_active_grps_by_terapeuta, filter_inactive_grps_by_terapeuta,
+                                          save_pac_grp, date_validator_pacs)
 
 
 @login_required(login_url="/main/login")
 def cadastrar_paciente(request):
+    """View para cadastramento de pacientes
+    """
     sucesso = False
     cadastro_form = CadastroPacienteForm(request.POST or None)
 
@@ -35,6 +42,8 @@ def cadastrar_paciente(request):
 
 @login_required(login_url="/main/login")
 def cadastrar_grupo(request):
+    """View para Cadastrar Grupos
+    """
     grupo_form = CadastroGrupoForm(request.POST or None)
 
     if grupo_form.is_valid():
@@ -58,7 +67,6 @@ def add_pacs_grupo(request, grupo_id):
     pacientes = CadastroPacientes.objects.filter(grupo__isnull=True)
     pacs_form = AdicionarPacGrupoForm
     data_grupo = date.today()
-    grupo_id = grupo_id
 
     if request.method == "POST":
         grupo = grupo_id
@@ -68,21 +76,7 @@ def add_pacs_grupo(request, grupo_id):
             CadastroPacientes.objects.filter(id__in=selected_items).update(grupo_id=grupo, modalidade_atendimento=1,
                                                                            terapeuta=current_user_terapeuta)
 
-            def save_pac_grp(selected_items, current_group, commit=True):
-                pacs_add = CadastroPacientes.objects.filter(id__in=selected_items)
-                grupo_add = current_group
-                for paciente in pacs_add:
-                    grupo = grupo_add
-                    entrada_prontuario_individual = Prontuarios(
-                        numero=paciente,
-                        autor=current_user_terapeuta,
-                        data_consulta=data_grupo,
-                        entrada=str(f"Paciente {paciente.nome}  foi adicionado ao grupo {current_group.label} "
-                                    f" {grupo.prontuario_grupo_numero} por {current_user_terapeuta} em {data_grupo}.")
-                    )
-                    entrada_prontuario_individual.save()
-
-            save_pac_grp(selected_items, current_group)
+            save_pac_grp(selected_items, current_group, current_user_terapeuta, data_grupo)
 
             sucesso = True
 
@@ -98,19 +92,15 @@ def add_pacs_grupo(request, grupo_id):
 @login_required(login_url="/main/login")
 def index(request):
     current_user_terapeuta = request.user.Terapeutas.get()
-    current_terapeuta_pacientes = CadastroPacientes.objects.filter(terapeuta_id=current_user_terapeuta)
-    current_terapeuta_grupos = CadastroGrupos.objects.filter(terapeuta_responsavel_id=current_user_terapeuta)
 
-    active_pacientes = current_terapeuta_pacientes.filter(desligado=False)
-    inactive_pacientes = current_terapeuta_pacientes.filter(desligado=True)
+    active_pacientes = filter_active_pacs_by_terapeuta(current_user_terapeuta)
+    inactive_pacientes = filter_inactive_pacs_by_terapeuta(current_user_terapeuta)
 
-    active_grupos = current_terapeuta_grupos.filter(desligado=False)
-    inactive_grupos = current_terapeuta_grupos.filter(desligado=True)
+    active_grupos = filter_active_grps_by_terapeuta(current_user_terapeuta)
+    inactive_grupos = filter_inactive_grps_by_terapeuta(current_user_terapeuta)
 
     context = {
         'current_user': current_user_terapeuta,
-        'pacientes': current_terapeuta_pacientes,
-        'grupos': current_terapeuta_grupos,
         'active_pacientes': active_pacientes,
         'inactive_pacientes': inactive_pacientes,
         'active_grupos': active_grupos,
@@ -157,10 +147,6 @@ def add_entrada(request, prontuario_numero):
     paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
     current_user_terapeuta = request.user.Terapeutas.get()
 
-    # Data da última entrada feita no prontuário do paciente
-    ultima_entrada = Prontuarios.objects.filter(numero=prontuario_numero).order_by('-data_consulta').first()
-    ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
-
     entrada_form = EntradaProntuario(initial={'numero': prontuario_numero})
     sucesso = False
 
@@ -168,16 +154,12 @@ def add_entrada(request, prontuario_numero):
         entrada_form = EntradaProntuario(request.POST)
 
         if entrada_form.is_valid():
-            data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+            date_validation_result = date_validator_pacs(prontuario_numero,entrada_form)
 
-            if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
-                entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
-
-            if not entrada_form.errors:
+            if date_validation_result:
                 sucesso = True
                 new_entry = entrada_form.save(commit=False)
                 new_entry.numero = paciente
-
                 new_entry.autor = current_user_terapeuta
                 new_entry.save()
 
@@ -461,6 +443,7 @@ def cadastro_user_terapeuta(request):
             terapeuta.save()
             inactive_user = send_verification_email(request, user_form)
         else:
+            print(user_form.errors)
             print(terapeuta_form.errors)
 
     context = {
@@ -527,6 +510,16 @@ def informacoes_terapeuta(request, id):
     return render(request, 'user_perfil.html', context)
 
 
+def render_login_form(request, login_form=None):
+    if not login_form:
+        login_form = AuthenticationForm()
+
+    context = {
+        'form': login_form
+    }
+    return render(request, 'login.html', context)
+
+
 @login_required(login_url="/main/login")
 def admin_interface(request):
     """
@@ -536,36 +529,25 @@ def admin_interface(request):
 
 
 def usuario_login(request):
-    if request.method == 'POST':
-        login_form = AuthenticationForm(request, request.POST)
+    if request.method != 'POST':
+        return render_login_form(request)
 
-        if login_form.is_valid():
-            current_user = login_form.get_user()
-            user_login(request, current_user)
+    login_form = AuthenticationForm(request, request.POST)
 
-            # Definindo os IDs dos grupos de Usuario(Administrativo/Terapeuta)
-            terapeutas_group_id = 1  # Conferir ID
-            administrativo_group_id = 2  # conferir ID
+    if not login_form.is_valid():
+        return render_login_form(request, login_form)
 
-            terapeutas_group = Group.objects.get(id=terapeutas_group_id)
-            administrativo_group = Group.objects.get(id=administrativo_group_id)
+    current_user = login_form.get_user()
 
-            # Checar Grupo do Usuário e redirecionar conforme grupo
-            if terapeutas_group in current_user.groups.all():
-                return redirect('/main/index/')
-            elif administrativo_group in current_user.groups.all():
-                return redirect('/main/administrativo/')
-            else:
-                error_message = "Algo deu errado! Entre em contato com a administração!\nErro: Grupo Inválido"
-                return HttpResponseForbidden(error_message)
-    else:
-        login_form = AuthenticationForm()
+    if current_user.require_otp_login:
+        return redirect_user_to_otp_confirmation(current_user)
 
-    context = {
-        'form': login_form
-    }
-    return render(request, 'login.html', context)
+    user_login(request, current_user)
 
+    terapeutas_group = get_terapeutas_group()
+    administrativo_group = get_administrativo_group()
+
+    return redirect_logged_user_to_home(current_user, terapeutas_group, administrativo_group)
 
 @login_required(login_url="/main/login")
 @permission_required('main.add_convenio', raise_exception=True)

@@ -5,11 +5,12 @@ from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
                     add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, relig_pac)
-
+from accounts.urls import urlpatterns as accounts_urls
 
 app_name = 'main'
 
 urlpatterns = [
+    include('accounts', accounts_urls),
     path('novo/', cadastrar_paciente, name='novo'),
     path('add_pac_grupo/', add_pacs_grupo, name='add-pacs-grupo'),
     path('add_entrada/<str:prontuario_numero>/',

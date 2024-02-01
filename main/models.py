@@ -201,7 +201,7 @@ class CadastroGrupos(models.Model):
         verbose_name='Terapeuta Responsável'
     )
 
-    terapeuta_auxiliar1 = models.ManyToManyField(CadastroProfissionais,
+    terapeuta_auxiliar = models.ManyToManyField(CadastroProfissionais,
                                                  verbose_name='Terapeuta Auxiliar', blank=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')

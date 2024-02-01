@@ -25,6 +25,7 @@ class TerapeutaRegistrationForm(UserCreationForm):
                 user.save()
                 terapeutas_group = Group.objects.get(name='Terapeutas')
                 user.groups.add(terapeutas_group)
+                user.requires_otp_login = True
             return user
 
 

@@ -3,7 +3,7 @@ import string
 from django.core.mail import send_mail
 from django.conf import settings
 
-
+# TODO: mover para camada services
 def generate_otp(length=6):
     characters = string.digits
     otp = ''.join(random.choice(characters) for _ in range(length))
