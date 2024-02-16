@@ -20,13 +20,17 @@ from django.conf import settings
 from django.conf.urls.static import static
 from .views import homepage
 
+from accounts.urls import urlpatterns as accounts_urls
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('verification/', include('verify_email.urls')),
     path('', homepage, name='homepage'),
     path('main/', include('main.urls')),
-    path('api/', include('accounts.urls')),
+    #path('api/', include('accounts.urls')),
+    path('account/', include((accounts_urls, 'account'), namespace='account')),
+
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

@@ -18,7 +18,8 @@ def redirect_logged_user_to_home(current_user, terapeutas_group: Group, administ
 
 def redirect_user_to_otp_confirmation(current_user):
     current_user_email = current_user.email
-    return redirect('/accounts/login-with-otp/', email=current_user_email)
+    return redirect('/account/login-with-otp/?email=' + current_user_email)
+    # return redirect('/account/login-with-otp/', email=current_user_email)
 
 
 def redirect_to_error_page():

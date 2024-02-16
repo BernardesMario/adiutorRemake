@@ -1,12 +1,23 @@
 from django.db.models import Q
 from datetime import date
-from main.models import CadastroGrupos, CadastroPacientes, Prontuarios, ProntuariosGrupos
+from main.models import CadastroGrupos, CadastroPacientes, Prontuarios, ProntuariosGrupos, PresencasGrupo
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseNotFound
+from main.utils import get_selected_items
 
 
-def registro_pacs_add_grp(selected_items, current_group, current_user_terapeuta, data_grupo):
+def get_selected_pacientes(selected_items):
+    """ Retorna os pacientes selecionados em um Request"""
+    selected_pacs = CadastroPacientes.objects.filter(id__in=selected_items)
+
+    return selected_pacs
+
+
+def registro_pacs_add_grp(request, current_group, current_user_terapeuta, data_grupo):
     """ Cria um registro no prontuário individual de um paciente que foi
     adicionado a um grupo"""
-    pacs_add = CadastroPacientes.objects.filter(id__in=selected_items)
+    selected_items = get_selected_items(request)
+    pacs_add = get_selected_pacientes(selected_items)
     grupo_add = current_group
 
     for paciente in pacs_add:
@@ -90,6 +101,7 @@ def get_current_pac(prontuario_numero):
     baseado no numero de Prontuario
     """
     current_paciente = CadastroPacientes.objects.get(prontuario_numero=prontuario_numero)
+
     return current_paciente
 
 
@@ -98,15 +110,25 @@ def get_current_pac_prontuario(prontuario_numero):
     baseado no numero do prontuario
     """
     current_paciente_prontuario = Prontuarios.objects.filter(numero_id=prontuario_numero)
+
     return current_paciente_prontuario
 
 
-def get_current_group(prontuario_grupo_numero):
+def get_current_group(prontuario_grupo_numero) -> CadastroGrupos:
     """ Retorna um objeto "Grupo" da model CadastroGrupos
     baseado no número de prontuario do grupo
     """
     current_grupo = CadastroGrupos.objects.get(prontuario_grupo_numero=prontuario_grupo_numero)
+
     return current_grupo
+
+
+def get_current_group_prontuario(prontuario_grupo_numero):
+    """Retorna um objeto "Prontuario" da model ProntuariosGrupo
+    baseado no numerp do prontuario"""
+    current_grupo_prontuario = ProntuariosGrupos.objects.filter(numero_id=prontuario_grupo_numero)
+
+    return current_grupo_prontuario
 
 
 def get_ultima_entrada_prontuarios_grupos(prontuario_grupo_numero):
@@ -124,15 +146,28 @@ def get_ultima_entrada_prontuarios_grupos(prontuario_grupo_numero):
     return ultima_entrada_data
 
 
-def date_validator_entrada_prontuario_grupo(prontuario_grupo_numero, entrada_form):
+def date_validator_entrada_prontuario_grupo(prontuario_grupo_numero: str, entrada_form):
+    """ Validação para garantir que a data de uma nova entrada em prontuário
+    de grupos não é anterior a data da última consulta registrada
+    """
+    data_nova_entrada = entrada_form.cleaned_data['data_consulta']
+
+    if not is_data_nova_consulta_group_valid(prontuario_grupo_numero, data_nova_entrada):
+        entrada_form.add_error('data_consulta', 'O paciente possui consultas posteriores a data informada!')
+
+
+def is_data_nova_consulta_group_valid(prontuario_grupo_numero: str, data_nova_entrada):
     """ Validação para garantir que a data de uma nova entrada em prontuário
     de grupos não é anterior a data da última consulta registrada
     """
     ultima_entrada_data = get_ultima_entrada_prontuarios_grupos(prontuario_grupo_numero)
-    data_nova_entrada = entrada_form.cleaned_data['data_consulta']
 
-    if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
-        entrada_form.add_error('data_consulta', 'O paciente possui consultas posteriores a data informada!')
+    if not ultima_entrada_data:
+        return True
+
+    is_valid = data_nova_entrada > ultima_entrada_data
+
+    return is_valid
 
 
 def get_ultima_entrada_prontuarios_pacs(current_pac):
@@ -149,15 +184,26 @@ def get_ultima_entrada_prontuarios_pacs(current_pac):
     return ultima_entrada_data
 
 
+# entrada_prontuario_grupo_form.py
 def date_validator_entrada_prontuario_pacs(current_pac, entrada_form):
     """ Validação para garantir que a data de uma nova entrada em prontuário
     de grupos não é anterior a data da última consulta registrada
     """
-    ultima_entrada_data = get_ultima_entrada_prontuarios_pacs(current_pac)
     data_nova_entrada = entrada_form.cleaned_data['data_consulta']
 
-    if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
+    if is_data_nova_consulta_valid(current_pac, data_nova_entrada):
         entrada_form.add_error('data_consulta', 'O paciente possui consultas posteriores a data informada!')
+
+
+# paciente_service.py
+def is_data_nova_consulta_valid(current_pac: CadastroPacientes, data_nova_consulta) -> bool:
+    """ Validação para garantir que a data de uma nova entrada em prontuário
+    de grupos não é anterior a data da última consulta registrada
+    """
+    ultima_entrada_data = get_ultima_entrada_prontuarios_pacs(current_pac)
+
+    is_valid = ultima_entrada_data and data_nova_consulta < ultima_entrada_data
+    return is_valid
 
 
 def save_desligamento(current_pac):
@@ -235,7 +281,6 @@ def registro_transferencia_pac(current_pac, transfer_form, current_user_terapeut
                                entrada=f"Paciente {current_pac.nome} foi transferido por "
                                        f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
                                        f"\n Motivo: {entrada_text}", )
-    return paciente
 
 
 def relig_pacs(current_pac, relig_form):
@@ -264,3 +309,66 @@ def registro_relig_pac(current_pac, relig_form):
                                        f"{data_religamento} com  {novo_terapeuta}."
                                )
     return current_pac
+
+
+def get_current_user_terapeuta(request):
+    """Obtem o objeto Terapeuta relacionado ao Usuário responsável pela Request"""
+    try:
+        user_terapeuta = request.user.Terapeutas.get()
+        current_user_terapeuta = user_terapeuta
+    except ObjectDoesNotExist:
+        return HttpResponseNotFound("Usuário não associado a um profissional Terapeuta!")
+
+    return current_user_terapeuta
+
+
+def get_pacs_no_grp():
+    """Filtra todos os pacientes que não estão em grupos"""
+    pacientes = CadastroPacientes.objects.filter(grupo__isnull=True)
+
+    return pacientes
+
+
+def register_presencas_consulta_grupo(entrada_form, selected_pacs, prontuario_grupo_numero):
+    """ Registra as presenças do grupo em uma data determinada
+    na model PresencasGrupo
+    """
+    nova_consulta = entrada_form
+    current_grupo = get_current_group(prontuario_grupo_numero)
+
+    presencas_grupo_entry = PresencasGrupo(
+        consulta=nova_consulta,
+        grupo_prontuario=current_grupo,
+        data=nova_consulta.data_consulta,
+    )
+
+    presencas_grupo_entry.pacientes.set(selected_pacs)
+
+    return selected_pacs
+
+
+def save_new_entrada_prontuario_grupo_pacs_individual(entrada_form,
+                                                      current_grupo,
+                                                      current_user_terapeuta,
+                                                      selected_pacs):
+    """Cria um cópia da entrada do prontuario do grupo nos
+    prontuarios individuais dos pacientes presentes nas sessão
+    """
+
+    new_entry = entrada_form.save(commit=False)
+
+    new_entry.numero_id = current_grupo.prontuario_grupo_numero
+    new_entry.autor = current_user_terapeuta
+    new_entry.save()
+
+    pacs_presentes = selected_pacs
+
+    for paciente in pacs_presentes:
+        entrada_prontuario_individual = Prontuarios(
+            numero=paciente,
+            autor=current_user_terapeuta,
+            data_consulta=new_entry.data_consulta,
+            entrada=new_entry.entrada
+        )
+
+        entrada_prontuario_individual.save()

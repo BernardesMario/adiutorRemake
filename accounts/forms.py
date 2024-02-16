@@ -20,3 +20,8 @@ class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = CustomUser
         fields = ("username", "email")
+
+
+class LoginWithOTPForm(forms.Form):
+    # Unbound Form para validação the OTP
+    otp = forms.CharField(validators=[MinLengthValidator(limit_value=6), MaxLengthValidator(limit_value=6)])
