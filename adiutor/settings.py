@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'accounts',
     'rest_framework',
     'bootstrap5',
+    'django_bootstrap5',
     'verify_email.apps.VerifyEmailConfig',
     'django.contrib.admin',
     'django.contrib.auth',

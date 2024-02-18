@@ -96,7 +96,7 @@ def filter_inactive_grps_by_terapeuta(terapeuta_id):
     return inactive_grps_terapeuta
 
 
-def get_current_pac(prontuario_numero):
+def get_current_pac(prontuario_numero) -> CadastroPacientes:
     """ Retorna um objeto "Paciente" da model CadastroPacientes
     baseado no numero de Prontuario
     """
@@ -109,7 +109,7 @@ def get_current_pac_prontuario(prontuario_numero):
     """ Retorna um objeto "Prontuario" da model Prontuarios
     baseado no numero do prontuario
     """
-    current_paciente_prontuario = Prontuarios.objects.filter(numero_id=prontuario_numero)
+    current_paciente_prontuario = Prontuarios.objects.filter(numero_id=prontuario_numero).order_by('-data_consulta')
 
     return current_paciente_prontuario
 
@@ -185,7 +185,7 @@ def get_ultima_entrada_prontuarios_pacs(current_pac):
 
 
 # entrada_prontuario_grupo_form.py
-def date_validator_entrada_prontuario_pacs(current_pac, entrada_form):
+def date_validator_entrada_prontuario_pacs(current_pac: CadastroPacientes, entrada_form):
     """ Validação para garantir que a data de uma nova entrada em prontuário
     de grupos não é anterior a data da última consulta registrada
     """
@@ -193,7 +193,11 @@ def date_validator_entrada_prontuario_pacs(current_pac, entrada_form):
 
     if is_data_nova_consulta_valid(current_pac, data_nova_entrada):
         entrada_form.add_error('data_consulta', 'O paciente possui consultas posteriores a data informada!')
+        # TODO: remove boolean return, since the form method will raise an exception
+        return False
 
+    # TODO: remove boolean return, since the form method will raise an exception
+    return True
 
 # paciente_service.py
 def is_data_nova_consulta_valid(current_pac: CadastroPacientes, data_nova_consulta) -> bool:

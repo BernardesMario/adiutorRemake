@@ -1,0 +1,17 @@
+<div class="d-flex justify-content-between align-items-baseline">
+    <h1>Prontuário de {{ paciente.nome }}</h1>
+</div>
+
+
+{% for prontuario in prontuarios %}
+    <div class="card mb-2">
+        <div class="card-header">
+            Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }}</strong><br>
+        </div>
+        <div class="card-body">
+            {{ prontuario.entrada }}
+        </div>
+    </div>
+{% empty %}
+    <li>Nenhuma entrada encontrada neste prontuário.</li>
+{% endfor %}

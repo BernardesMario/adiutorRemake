@@ -1,31 +1,32 @@
+from datetime import date
+
 from django.contrib.auth import login as user_login
+from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import Group
-from django.urls import reverse
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import permission_required, login_required
-from django.http import HttpResponseForbidden, HttpResponse
-from django.template.loader import render_to_string
-from datetime import date
+from django.urls import reverse
 from verify_email.email_handler import send_verification_email
+
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuario, CadastrarConvenios,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm, UpdatePacienteForm,
-                    CadastroGrupoForm, CadastroPacienteNovoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
+                    CadastroGrupoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
 from .models import (CadastroPacientes, Prontuarios, CadastroGrupos,
                      ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
-from .utils import get_selected_items
-from .services.terapeutas_service import get_terapeutas_group, get_administrativo_group
-from .services.users_service import redirect_logged_user_to_home, redirect_user_to_otp_confirmation
+from .services.file_service import render_to_pdf
 from .services.pacientes_services import (filter_inactive_pacs_by_terapeuta, filter_active_pacs_by_terapeuta,
                                           filter_active_grps_by_terapeuta, filter_inactive_grps_by_terapeuta,
                                           registro_pacs_add_grp, get_current_pac, get_current_pac_prontuario,
-                                          get_current_group, date_validator_entrada_prontuario_grupo, get_pacs_grp,
-                                          date_validator_entrada_prontuario_pacs, desligamento_registro_prontuario,
-                                          save_desligamento, save_desligamento_grp, registro_desligamento_grupos,
-                                          registro_relig_pac, registro_transferencia_pac, relig_pacs, get_pacs_no_grp,
+                                          get_current_group, date_validator_entrada_prontuario_pacs, get_pacs_no_grp,
                                           get_current_user_terapeuta, get_current_group_prontuario,
                                           get_selected_pacientes)
+from .services.terapeutas_service import get_terapeutas_group, get_administrativo_group
+from .services.users_service import redirect_logged_user_to_home
+from .utils import get_selected_items
+
+
+# from wkhtmltopdf.views import PDFTemplateView
 
 
 @login_required(login_url="/main/login")
@@ -126,7 +127,7 @@ def index(request):
 
 @login_required(login_url="/main/login")
 # TODO criar permissão para visualização de prontuario
-def list_entradas(request, prontuario_numero):
+def list_entradas(request, prontuario_numero, as_pdf=False):
     """View para exibir o prontuario de um paciente individual
     """
     current_user_terapeuta = get_current_user_terapeuta(request)
@@ -134,12 +135,18 @@ def list_entradas(request, prontuario_numero):
     current_paciente_prontuario = get_current_pac_prontuario(prontuario_numero)
 
     context = {
+        'prontuario_numero': prontuario_numero,
         'current_user': current_user_terapeuta,
         'paciente': current_paciente,
         'prontuarios': current_paciente_prontuario,
     }
 
-    return render(request, 'prontuario_pac.html', context)
+    if request.GET.get('as_pdf'):
+        template = 'prontuario_for_pdf.html'
+        return render_to_pdf(template, context)
+
+    template = 'prontuario_pac.html'
+    return render(request, template, context)
 
 
 @login_required(login_url="/main/login")
@@ -161,7 +168,7 @@ def list_entradas_grupo(request, prontuario_grupo_numero):
 
 @login_required(login_url="/main/login")
 @permission_required('main.add_entry', raise_exception=True)
-def add_entrada(request, prontuario_numero):
+def add_entrada(request, prontuario_numero: str):
     """View para adicionar entradas no prontuarios de pacientes individuais"""
     paciente = get_current_pac(prontuario_numero)
     current_user_terapeuta = get_current_user_terapeuta(request)
@@ -173,7 +180,7 @@ def add_entrada(request, prontuario_numero):
         entrada_form = EntradaProntuario(request.POST)
 
         if entrada_form.is_valid():
-            date_validation_result = date_validator_pacs(prontuario_numero, entrada_form)
+            date_validation_result = date_validator_entrada_prontuario_pacs(paciente, entrada_form)
 
             if date_validation_result:
                 sucesso = True
@@ -204,11 +211,6 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
         entrada_form = EntradaProntuarioGrupoForm(request.POST)
 
         if entrada_form.is_valid():
-            data_nova_entrada = entrada_form.cleaned_data['data_consulta']
-
-            if ultima_entrada_data and data_nova_entrada < ultima_entrada_data:
-                entrada_form.add_error('data_consulta', 'Data não pode ser anterior à da última consulta!')
-
             if not entrada_form.errors:
                 sucesso = True
                 new_entry = entrada_form.save(commit=False)
@@ -237,7 +239,7 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
 
     context = {
         'form': entrada_form,
-        'pacientes': pacientes_grupo,
+        'pacientes': pacs_presentes,
         'sucesso': sucesso,
     }
 

@@ -19,3 +19,4 @@ soupsieve==2.5
 sqlparse==0.4.4
 tzdata==2023.3
 zope.interface==6.1
+xhtml2pdf==0.2.15

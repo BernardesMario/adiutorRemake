@@ -232,6 +232,7 @@ class EntradaProntuarioGrupoForm(forms.ModelForm):
         hoje = date.today()
         if hoje < data_consulta:
             raise forms.ValidationError('Data Inválida')
+        self._raise_if_appointment_date_is_invalid()
         return data_consulta
 
     class Meta:
@@ -243,7 +244,7 @@ class EntradaProntuarioGrupoForm(forms.ModelForm):
             )
         }
 
-    def _is_data_consulta_after_last_consulta(self):
+    def _raise_if_appointment_date_is_invalid(self):
         data_nova_entrada = self.cleaned_data['data_consulta']
 
         if not is_data_nova_consulta_group_valid(self.initial['numero'], data_nova_entrada):

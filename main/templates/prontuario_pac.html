@@ -1,36 +1,29 @@
 {% extends 'middleman1.html' %}
-{% load bootstrap5 %}
-{% load static %}
 
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <title>{% block title %}Prontuario{% endblock %}</title>
-</head>
-<body>
-<div class="page-container">
-    {% block content %}
-    <h1>Prontuário de {{ paciente.nome }} </h1>
 
-    {% csrf_token %}
+{% block title %}Prontuário{% endblock %}
 
-    <ul>
-        {% for prontuario in prontuarios %}
-            <li>
-                {{ prontuario.data_consulta }} - {{ prontuario.autor }} <br>
+{% block content %}
+    <div class="d-flex justify-content-between align-items-baseline">
+        <h1>Prontuário de {{ paciente.nome }}</h1>
+        {% url 'main:prontuario' prontuario_numero=prontuario_numero as download_url %}
+        <a href="{{ download_url }}?as_pdf=1" target="_blank">
+            <span class="material-icons fs-1">print</span>
+
+        </a>
+    </div>
+
+
+    {% for prontuario in prontuarios %}
+        <div class="card mb-2">
+            <div class="card-header">
+                Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }}</strong><br>
+            </div>
+            <div class="card-body">
                 {{ prontuario.entrada }}
-            </li>
-        {% empty %}
-            <li>Nenhuma entrada encontrada neste prontuário.</li>
-        {% endfor %}
-    </ul>
-    {% endblock %}
-</div>
-
-<a href="{% url 'main:index' %}"> Voltar ao Inicio </a>
-
-<footer class="footer">
-    criado por Mário P. Bernardes, 2023
-</footer>
-</body>
-</html>
+            </div>
+        </div>
+    {% empty %}
+        <li>Nenhuma entrada encontrada neste prontuário.</li>
+    {% endfor %}
+{% endblock %}
