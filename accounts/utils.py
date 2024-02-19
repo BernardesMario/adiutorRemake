@@ -14,7 +14,7 @@ def generate_otp(length=6):
 
 def send_otp_email(email, otp):
     subject = 'Seu código para Login no Adiutor'
-    message = f'Seu código é: {otp}'
+    message = f'Seu código de uso único é: {otp}'
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
     send_mail(subject, message, from_email, recipient_list)

@@ -8,7 +8,8 @@ import re
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
                      ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
 from accounts.models import CustomUser
-from .services.pacientes_services import is_data_nova_consulta_group_valid
+from .services.pacientes_services import (is_data_nova_consulta_group_valid, is_date_not_future,
+                                          is_paciente_menor_acompanhado, is_data_nova_consulta_valid)
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
@@ -43,13 +44,6 @@ class CadastroProfissionaisForm(forms.ModelForm):
     endereco_numero = forms.CharField(validators=[validate_numbers])
     cep_numero = forms.CharField(validators=[validate_numbers])
 
-    def clean_nascimento(self):
-        nascimento = self.cleaned_data.get('nascimento_data')
-        hoje = date.today()
-        if hoje < nascimento:
-            raise forms.ValidationError('Idade Inválida')
-        return nascimento
-
     class Meta:
         model = CadastroProfissionais
         fields = ['nome', 'nascimento_data', 'conselho_codigo', 'pos_grad_status', 'unimed_codigo', 'cpf_numero',
@@ -61,32 +55,15 @@ class CadastroProfissionaisForm(forms.ModelForm):
             ),
         }
 
+    def _raise_if_nascimento_is_invalid(self):
+        nascimento_data = self.cleaned_data['nascimento_data']
+
+        if nascimento_data is None or not is_date_not_future(nascimento_data):
+            raise forms.ValidationError('Data inválida')
+
 
 class CadastroPacienteForm(forms.ModelForm):
-    """Função Clean para verificar se a idade não está no futuro
-    """
-    def clean_nascimento(self):
-        nascimento = self.cleaned_data.get('nascimento')
-        hoje = date.today()
-        if hoje < nascimento:
-            raise forms.ValidationError('Idade Inválida')
-        return nascimento
-
-    """Função Clean para garantir que um menor de idade possua responsável legal
-    """
-    def clean_nascimento_reponsavel_legal(self):
-        cleaned_data = super().clean()
-        nascimento = cleaned_data.get('nascimento')
-        responsavel_legal = cleaned_data.get('responsavel_legal')
-
-        if nascimento:
-            hoje = date.today()
-            idade_paciente = hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
-
-            if idade_paciente < 18 and not responsavel_legal:
-                raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
-
-    """Função clean para validação de caracteres do campo responsavel_)legal
+    """Função clean para validação de caracteres do campo responsavel_legal
     """
     def clean_responsavel(self):
         cleaned_data = super().clean()
@@ -125,6 +102,33 @@ class CadastroPacienteForm(forms.ModelForm):
                 attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
             )
         }
+
+    def _raise_if_nascimento_is_invalid(self):
+        nascimento_data = self.cleaned_data('nascimento')
+        print("_raise_if_nascimento rodou")
+
+        if nascimento_data is None or not is_date_not_future(nascimento_data):
+            raise forms.ValidationError('Data inválida')
+
+    def _raise_if_inicio_is_invalid(self):
+        data_inicio = self.cleaned_data('data_inicio')
+        print("_raise_if_inicio rodou")
+        if data_inicio is None or not is_date_not_future(data_inicio):
+            raise forms.ValidationError('Data inválida')
+
+    def _raise_if_menor_desacompanhado(self):
+        nascimento = self.cleaned_data.get('nascimento')
+        responsavel_legal = self.cleaned_data.get('responsavel_legal')
+        print("função rodou")
+        if not is_paciente_menor_acompanhado(nascimento, responsavel_legal):
+            raise forms.ValidationError('Pacientes menores de idade devem estar acompanhados por responsável legal')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_menor_desacompanhado()
+        self._raise_if_nascimento_is_invalid()
+        self._raise_if_inicio_is_invalid()
+        return cleaned_data
 
 
 class CadastroPacienteNovoForm(forms.ModelForm):
@@ -176,6 +180,7 @@ class CadastroGrupoForm(forms.ModelForm):
         model = CadastroGrupos
         fields = ['label', 'prontuario_grupo_numero',
                   'terapeuta_responsavel', 'data_inicio']
+
         widgets = {'data_inicio': forms.DateInput(
             attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa',
                    'class': 'form-control'}
@@ -207,12 +212,6 @@ class CadastrarConvenios(forms.ModelForm):
 
 
 class EntradaProntuario(forms.ModelForm):
-    def clean_data_consulta(self):
-        data_consulta = self.cleaned_data.get('data_consulta')
-        hoje = date.today()
-        if hoje < data_consulta:
-            raise forms.ValidationError('Data Inválida')
-        return data_consulta
 
     class Meta:
         model = Prontuarios
@@ -223,17 +222,26 @@ class EntradaProntuario(forms.ModelForm):
             ),
         }
 
+    def _raise_if_data_is_invalid(self):
+        data_consulta = self.cleaned_data.get('data_consulta')
+
+        if data_consulta is None or not is_date_not_future(data_consulta):
+            raise forms.ValidationError('Data Inválida!')
+
+    def _raise_if_data_consulta_not_valid(self):
+        data_consulta = self.cleaned_data.get('data_consulta')
+
+        if not is_data_nova_consulta_valid(self.initial['prontuario_numero'], data_consulta):
+            raise forms.ValidationError('Paciente possui consultas posteriores a data informada!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_data_is_invalid()
+        self._raise_if_data_consulta_not_valid()
+        return cleaned_data
+
 
 class EntradaProntuarioGrupoForm(forms.ModelForm):
-    def clean_data_consulta(self):
-        """Validar se o campo data_consulta é valido.
-        """
-        data_consulta = self.cleaned_data.get('data_consulta')
-        hoje = date.today()
-        if hoje < data_consulta:
-            raise forms.ValidationError('Data Inválida')
-        self._raise_if_appointment_date_is_invalid()
-        return data_consulta
 
     class Meta:
         model = ProntuariosGrupos
@@ -244,11 +252,23 @@ class EntradaProntuarioGrupoForm(forms.ModelForm):
             )
         }
 
-    def _raise_if_appointment_date_is_invalid(self):
+    def _raise_if_data_is_invalid(self):
+        data_consulta = self.cleaned_data.get('data_consulta')
+
+        if data_consulta is None or not is_date_not_future(data_consulta):
+            raise forms.ValidationError('Data Inválida!')
+
+    def _raise_if_data_consulta_is_invalid(self):
         data_nova_entrada = self.cleaned_data['data_consulta']
 
         if not is_data_nova_consulta_group_valid(self.initial['numero'], data_nova_entrada):
-            raise forms.ValidationError('O paciente possui consultas posteriores a data informada!')
+            raise forms.ValidationError('O grupo possui consultas posteriores a data informada!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_data_is_invalid()
+        self._raise_if_data_consulta_is_invalid()
+        return cleaned_data
 
 
 class PacienteDesligamentoForm(forms.ModelForm):
@@ -267,6 +287,24 @@ class PacienteDesligamentoForm(forms.ModelForm):
         required=True
     )
 
+    def _raise_if_data_is_invalid(self):
+        data_final = self.cleaned_data.get('data_final')
+
+        if data_final is None or not is_date_not_future(data_final):
+            raise forms.ValidationError('Data Inválida!')
+
+    def _raise_if_data_final_is_invalid(self):
+        data_nova_entrada = self.cleaned_data['data_final']
+
+        if not is_data_nova_consulta_group_valid(self.initial['numero'], data_nova_entrada):
+            raise forms.ValidationError('O paciente possui consultas posteriores a data informada!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_data_is_invalid()
+        self._raise_if_data_final_is_invalid()
+        return cleaned_data
+
 
 class GrupoDesligamentoForm(forms.ModelForm):
     class Meta:
@@ -283,6 +321,24 @@ class GrupoDesligamentoForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'rows': 3}),
         required=True
     )
+
+    def _raise_if_data_is_invalid(self):
+        data_final = self.cleaned_data.get('data_final')
+
+        if data_final is None or not is_date_not_future(data_final):
+            raise forms.ValidationError('Data Inválida!')
+
+    def _raise_if_data_final_not_valid(self):
+        data_final = self.cleaned_data.get('data_final')
+
+        if not is_data_nova_consulta_valid(self.initial['prontuario_numero'], data_final):
+            raise forms.ValidationError('Grupo possui consultas posteriores a data informada!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_data_is_invalid()
+        self._raise_if_data_final_not_valid()
+        return cleaned_data
 
 
 class PacienteTransferenciaForm(forms.ModelForm):

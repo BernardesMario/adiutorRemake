@@ -1,3 +1,4 @@
+from django import forms
 from django.db.models import Q
 from datetime import date
 from main.models import CadastroGrupos, CadastroPacientes, Prontuarios, ProntuariosGrupos, PresencasGrupo
@@ -170,6 +171,30 @@ def is_data_nova_consulta_group_valid(prontuario_grupo_numero: str, data_nova_en
     return is_valid
 
 
+def is_date_not_future(data_field) -> bool:
+    """ Validação de campos de data
+    """
+    print("rodando is_date_not_futere")
+    hoje = date.today()
+
+    is_valid = hoje > data_field
+
+    return is_valid
+
+
+def is_paciente_menor_acompanhado(nascimento, responsavel_legal) -> bool:
+    """ Validação para garantir que menores de idade
+    estejam acompanhados por um responsável legal
+    """
+    hoje = date.today()
+    idade_paciente = hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
+
+    if idade_paciente < 18 and not responsavel_legal:
+        return False
+    else:
+        return True
+
+
 def get_ultima_entrada_prontuarios_pacs(current_pac):
     """Obtem a data da ultima entrada no prontuario de um paciente individual,
     caso exista, através do numero de prontuario
@@ -184,10 +209,9 @@ def get_ultima_entrada_prontuarios_pacs(current_pac):
     return ultima_entrada_data
 
 
-# entrada_prontuario_grupo_form.py
 def date_validator_entrada_prontuario_pacs(current_pac: CadastroPacientes, entrada_form):
     """ Validação para garantir que a data de uma nova entrada em prontuário
-    de grupos não é anterior a data da última consulta registrada
+     não é anterior a data da última consulta registrada
     """
     data_nova_entrada = entrada_form.cleaned_data['data_consulta']
 
@@ -199,14 +223,19 @@ def date_validator_entrada_prontuario_pacs(current_pac: CadastroPacientes, entra
     # TODO: remove boolean return, since the form method will raise an exception
     return True
 
+
 # paciente_service.py
 def is_data_nova_consulta_valid(current_pac: CadastroPacientes, data_nova_consulta) -> bool:
     """ Validação para garantir que a data de uma nova entrada em prontuário
-    de grupos não é anterior a data da última consulta registrada
+    de Pacientes individuais não é anterior a data da última consulta registrada
     """
     ultima_entrada_data = get_ultima_entrada_prontuarios_pacs(current_pac)
 
+    if ultima_entrada_data is None:
+        return True
+
     is_valid = ultima_entrada_data and data_nova_consulta < ultima_entrada_data
+
     return is_valid
 
 

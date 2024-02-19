@@ -1,5 +1,4 @@
 from datetime import date
-
 from django.contrib.auth import login as user_login
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -29,12 +28,28 @@ from .utils import get_selected_items
 # from wkhtmltopdf.views import PDFTemplateView
 
 
+def render_cadastro_paciente_form(request, cadastro_form=None):
+    if not cadastro_form:
+        cadastro_form = CadastroPacienteForm()
+
+    context = {
+        'form': cadastro_form
+    }
+    return render(request, 'cadastramento_pac.html', context)
+
+
 @login_required(login_url="/main/login")
 def cadastrar_paciente(request):
     """View para cadastramento de pacientes
     """
-    sucesso = False
-    cadastro_form = CadastroPacienteForm(request.POST or None)
+
+    if request.method != 'POST':
+        return render_cadastro_paciente_form(request)
+
+    cadastro_form = CadastroPacienteForm(request.POST)
+
+    if not cadastro_form.is_valid():
+        return render_cadastro_paciente_form(request, cadastro_form)
 
     if cadastro_form.is_valid():
         sucesso = True
@@ -555,10 +570,8 @@ def usuario_login(request):
     current_user = login_form.get_user()
 
     if current_user.require_otp_login:
-        #return redirect('account:login-with-otp', email=current_user.email)
         redirect_url = reverse('account:login-with-otp') + f'?email={current_user.email}'
         return redirect(redirect_url)
-        # return redirect_user_to_otp_confirmation(current_user)
 
     user_login(request, current_user)
 
