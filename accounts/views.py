@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
-from main.services.terapeutas_service import get_terapeutas_group, get_administrativo_group
+from main.services.terapeutas_services import get_terapeutas_group, get_administrativo_group
 from main.services.users_service import redirect_logged_user_to_home
 from rest_framework.views import APIView
 from rest_framework.response import Response
