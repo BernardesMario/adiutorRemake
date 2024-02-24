@@ -201,8 +201,7 @@ class CadastroGrupos(models.Model):
         verbose_name='Terapeuta Responsável'
     )
 
-    terapeuta_auxiliar = models.ManyToManyField(CadastroProfissionais,
-                                                 verbose_name='Terapeuta Auxiliar', blank=True)
+    terapeuta_auxiliar = models.ManyToManyField(CadastroProfissionais, verbose_name='Terapeuta Auxiliar', blank=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
@@ -274,7 +273,7 @@ class PresencasGrupo(models.Model):
         verbose_name_plural = 'Presenças'
 
 
-class Prontuarios(models.Model):
+class ProntuariosIndividuais(models.Model):
     numero = models.ForeignKey(
         'CadastroPacientes',
         on_delete=models.PROTECT,

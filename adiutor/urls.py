@@ -28,7 +28,6 @@ urlpatterns = [
     path('verification/', include('verify_email.urls')),
     path('', homepage, name='homepage'),
     path('main/', include('main.urls')),
-    #path('api/', include('accounts.urls')),
     path('account/', include((accounts_urls, 'account'), namespace='account')),
 
 ]

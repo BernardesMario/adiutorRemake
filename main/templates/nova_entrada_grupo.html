@@ -44,10 +44,7 @@
 <form action="" method="POST" id="form" novalidate>
     {% csrf_token %}
     <div class="form-group">
-        {% bootstrap_form form %}
-    </div>
-
-    <table>
+        {{ form }}        <table>
     <thead>
       <tr>
         <th>Presente / </th>
@@ -55,7 +52,7 @@
       </tr>
     </thead>
     <tbody>
-      {% for paciente in pacientes %}
+      {% for paciente in pacientes_grupo %}
         <tr>
           <td><input type="checkbox" name="selected_items" value="{{ paciente.id }}"></td>
           <td>{{ paciente.nome }}</td>
@@ -63,6 +60,9 @@
       {% endfor %}
     </tbody>
   </table>
+    </div>
+
+
     <button type="submit" class="btn btn-primary btn-block">
         Salvar
     </button>

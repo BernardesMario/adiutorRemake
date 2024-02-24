@@ -9,13 +9,13 @@ django.setup()
 
 
 class Command(BaseCommand):
-    def create_group(self, group_name):
+    def create_group(self, group_name) -> Group:
         group, created = Group.objects.get_or_create(name=group_name)
         if created:
             self.stdout.write(self.style.SUCCESS(f"Grupo '{group_name}' criado com sucesso"))
         return group
 
-    def create_permission(self, content_type, codename, name):
+    def create_permission(self, content_type, codename, name) -> Permission:
         permission, created = Permission.objects.get_or_create(
             content_type=content_type,
             codename=codename,

@@ -6,13 +6,14 @@ from django.core.validators import MinLengthValidator, MaxLengthValidator
 from datetime import date
 import re
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
-                     ConveniosAceitos, Prontuarios, ProntuariosGrupos, validate_numbers, validate_letters)
+                     ConveniosAceitos, ProntuariosIndividuais, ProntuariosGrupos, validate_numbers, validate_letters)
 from accounts.models import CustomUser
 from .services.pacientes_services import (is_data_nova_consulta_group_valid, is_date_not_future,
-                                          is_paciente_menor_acompanhado, is_data_nova_consulta_valid)
+                                          is_paciente_menor_acompanhado, is_data_nova_consulta_individual_valid)
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
+
     phone_number = forms.CharField(validators=[
         validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)])
     username = forms.CharField(validators=[validate_letters])
@@ -63,9 +64,10 @@ class CadastroProfissionaisForm(forms.ModelForm):
 
 
 class CadastroPacienteForm(forms.ModelForm):
-    """Função clean para validação de caracteres do campo responsavel_legal
-    """
+
     def clean_responsavel(self):
+        """Função clean para validação de caracteres do campo responsavel_legal
+        """
         cleaned_data = super().clean()
         responsavel = cleaned_data.get('responsavel_legal')
 
@@ -186,7 +188,6 @@ class CadastroGrupoForm(forms.ModelForm):
                    'class': 'form-control'}
         )
         }
-    # Checar funcionalidade do widget
 
 
 class AdicionarPacGrupoForm(forms.ModelForm):
@@ -196,7 +197,7 @@ class AdicionarPacGrupoForm(forms.ModelForm):
         fields = ['grupo']
 
 
-class CadastrarConvenios(forms.ModelForm):
+class CadastrarConveniosForm(forms.ModelForm):
     cnpj_numero = forms.CharField(validators=[validate_numbers])
     endereco_numero = forms.CharField(validators=[validate_numbers])
     cep_numero = forms.CharField(validators=[validate_numbers])
@@ -211,10 +212,9 @@ class CadastrarConvenios(forms.ModelForm):
         fields = '__all__'
 
 
-class EntradaProntuario(forms.ModelForm):
-
+class EntradaProntuarioForm(forms.ModelForm):
     class Meta:
-        model = Prontuarios
+        model = ProntuariosIndividuais
         fields = ['data_consulta', 'entrada']
         widgets = {
             'data_consulta': forms.DateInput(
@@ -231,7 +231,7 @@ class EntradaProntuario(forms.ModelForm):
     def _raise_if_data_consulta_not_valid(self):
         data_consulta = self.cleaned_data.get('data_consulta')
 
-        if not is_data_nova_consulta_valid(self.initial['prontuario_numero'], data_consulta):
+        if not is_data_nova_consulta_individual_valid(self.initial['numero'], data_consulta):
             raise forms.ValidationError('Paciente possui consultas posteriores a data informada!')
 
     def clean(self):
@@ -296,7 +296,7 @@ class PacienteDesligamentoForm(forms.ModelForm):
     def _raise_if_data_final_is_invalid(self):
         data_nova_entrada = self.cleaned_data['data_final']
 
-        if not is_data_nova_consulta_group_valid(self.initial['numero'], data_nova_entrada):
+        if not is_data_nova_consulta_individual_valid(self.initial['numero'], data_nova_entrada):
             raise forms.ValidationError('O paciente possui consultas posteriores a data informada!')
 
     def clean(self):
@@ -331,7 +331,8 @@ class GrupoDesligamentoForm(forms.ModelForm):
     def _raise_if_data_final_not_valid(self):
         data_final = self.cleaned_data.get('data_final')
 
-        if not is_data_nova_consulta_valid(self.initial['prontuario_numero'], data_final):
+#        if not is_data_nova_consulta_valid(self.initial['prontuario_grupo_numero'], data_final):
+        if not is_data_nova_consulta_group_valid(self.initial['prontuario_grupo_numero'], data_final):
             raise forms.ValidationError('Grupo possui consultas posteriores a data informada!')
 
     def clean(self):
