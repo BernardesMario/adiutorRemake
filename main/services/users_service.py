@@ -29,6 +29,7 @@ def redirect_to_error_page():
     return HttpResponseForbidden(error_message)
 
 
+# redundante = terapeutas_services
 def get_current_user_terapeuta_id(request):
     """ Associa o usuário logado ao seu cadastro de Terapeuta
     """
