@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from .models import CustomUser
-from main.forms import validate_letters, validate_numbers
+from main.models import validate_numbers, validate_letters
 from django.core.validators import MinLengthValidator, MaxLengthValidator
 
 

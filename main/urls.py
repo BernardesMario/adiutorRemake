@@ -4,7 +4,8 @@ from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
-                    add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, relig_pac)
+                    add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, religar_paciente,
+                    modificar_cadastro_profissionais, producao_mensal)
 
 app_name = 'main'
 
@@ -20,7 +21,7 @@ urlpatterns = [
          name='desligamento'
          ),
     path('reativar/<str:prontuario_numero>/',
-         relig_pac, name='religamento'),
+         religar_paciente, name='religamento'),
     path('transfer/<str:prontuario_numero>/',
          permission_required('main.transfer_pac')(transferir_paciente),
          name='transferencia'),
@@ -69,4 +70,8 @@ urlpatterns = [
          detalhes_grupo,
          name='dados-grupo'
          ),
+    path('modificar/terapeuta/<str:terapeuta_codigo>/',
+         # permission_required(CREATE-PERMISSION)(),
+         modificar_cadastro_profissionais, name='modificar-terapeuta'),
+    path('producao/gerar/', producao_mensal, name='gerar-producao')
 ]

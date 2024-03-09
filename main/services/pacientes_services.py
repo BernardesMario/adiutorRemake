@@ -4,8 +4,7 @@ from django.http import HttpRequest
 from datetime import date
 from typing import Union
 from main.services.terapeutas_services import get_current_user_terapeuta
-from main.utils import get_selected_items
-# from main.forms import (PacienteDesligamentoForm, GrupoDesligamentoForm, PacienteTransferenciaForm, GrupoTrasferenciaForm)
+from main.utils import get_selected_items, calculate_age
 from main.models import (CadastroGrupos, CadastroPacientes, ProntuariosIndividuais, ProntuariosGrupos, PresencasGrupo,
                          CadastroProfissionais)
 
@@ -231,25 +230,24 @@ def is_data_nova_consulta_group_valid(prontuario_grupo_numero: str, data_nova_en
     return is_valid
 
 
-def is_date_not_future(data_field: date) -> bool:
-    """ Validação de campos de data
-    """
-    print("rodando is_date_not_futere")
-    hoje = date.today()
-
-    is_valid = hoje >= data_field
-
-    return is_valid
-
-
 def is_paciente_menor_acompanhado(nascimento: date, responsavel_legal: Union[str, None]) -> bool:
     """ Validação para garantir que menores de idade
     estejam acompanhados por um responsável legal
     """
-    hoje = date.today()
-    idade_paciente = hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
+    idade_paciente = calculate_age(nascimento)
 
     if idade_paciente < 18 and not responsavel_legal:
+        return False
+    else:
+        return True
+
+
+def cpf_responsavel_required_when_responsavel(responsavel_legal: Union[str, None],
+                                              cpf_responsavel_legal: Union[str, None]) -> bool:
+    """ Validação para garantir que quando há responsável legal
+    o campo CPF do responsável também esteja preenchido
+    """
+    if responsavel_legal and not cpf_responsavel_legal:
         return False
     else:
         return True
@@ -515,13 +513,13 @@ def save_and_register_grupo_transfer(transfer_form, current_user_terapeuta: Cada
         current_grupo.save()
 
         ProntuariosGrupos.objects.create(numero=current_grupo,
-                                              autor=current_user_terapeuta,
-                                              data_consulta=data_transfer,
-                                              entrada=f"Grupo {current_grupo.label} "
-                                                      f"prontuário {current_grupo.prontuario_grupo_numero} "
-                                                      f"foi transferido por {current_user_terapeuta} "
-                                                      f"para {novo_terapeuta} em {data_transfer}."
-                                                      f"\n Motivo: {entrada_text}")
+                                         autor=current_user_terapeuta,
+                                         data_consulta=data_transfer,
+                                         entrada=f"Grupo {current_grupo.label} "
+                                                 f"prontuário {current_grupo.prontuario_grupo_numero} "
+                                                 f"foi transferido por {current_user_terapeuta} "
+                                                 f"para {novo_terapeuta} em {data_transfer}."
+                                                 f"\n Motivo: {entrada_text}")
 
         return True
     except Exception as e:

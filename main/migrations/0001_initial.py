@@ -5,6 +5,7 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import main.models
+import main.utils
 
 
 class Migration(migrations.Migration):
@@ -21,7 +22,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('label', models.CharField(max_length=100, validators=[django.core.validators.MinLengthValidator(limit_value=4)], verbose_name='Nome')),
-                ('prontuario_grupo_numero', models.CharField(max_length=5, unique=True, validators=[main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=4)], verbose_name='Nº Prontuário do Grupo')),
+                ('prontuario_grupo_numero', models.CharField(max_length=5, unique=True, validators=[
+                    main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=4)], verbose_name='Nº Prontuário do Grupo')),
                 ('desligado', models.BooleanField(default=False, help_text='Grupo encerrado', verbose_name='Desativado')),
                 ('data_inicio', models.DateField(help_text='dd/mm/aaaa', verbose_name='Data de Inicio')),
                 ('data_final', models.DateField(blank=True, help_text='dd/mm/aaaa', null=True, verbose_name='Data do Desligamento')),
@@ -37,15 +39,18 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nome', models.CharField(max_length=100, validators=[main.models.validate_letters, django.core.validators.MinLengthValidator(limit_value=5)], verbose_name='Nome do Paciente')),
-                ('prontuario_numero', models.CharField(max_length=7, unique=True, validators=[main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=7)], verbose_name='Nº de Prontuario')),
+                ('prontuario_numero', models.CharField(max_length=7, unique=True, validators=[
+                    main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=7)], verbose_name='Nº de Prontuario')),
                 ('nascimento', models.DateField(help_text='dd/mm/aaaa', verbose_name='Data de Nascimento')),
-                ('responsavel_legal', models.CharField(blank=True, max_length=100, null=True, validators=[main.models.validate_letters, django.core.validators.MinLengthValidator(limit_value=5)], verbose_name='Responsável Legal')),
+                ('responsavel_legal', models.CharField(blank=True, max_length=100, null=True, validators=[
+                    main.models.validate_letters, django.core.validators.MinLengthValidator(limit_value=5)], verbose_name='Responsável Legal')),
                 ('data_inicio', models.DateField(help_text='dd/mm/aaaa', verbose_name='Data de Inicio')),
                 ('data_final', models.DateField(blank=True, help_text='dd/mm/aaaa', null=True, verbose_name='Data do Desligamento')),
                 ('desligado', models.BooleanField(default=False, help_text='Paciente desligado', verbose_name='Desligado')),
                 ('cpf_numero', models.CharField(max_length=11, unique=True, validators=[main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=11)], verbose_name='CPF')),
                 ('modalidade_atendimento', models.IntegerField(choices=[(0, 'Individual'), (1, 'Grupo'), (2, 'Casal')], verbose_name='Modalidade')),
-                ('carteirinha_convenio', models.CharField(blank=True, max_length=50, null=True, validators=[main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=7)], verbose_name='Número do Convênio')),
+                ('carteirinha_convenio', models.CharField(blank=True, max_length=50, null=True, validators=[
+                    main.models.validate_numbers, django.core.validators.MinLengthValidator(limit_value=7)], verbose_name='Número do Convênio')),
                 ('endereco_rua', models.CharField(max_length=100, validators=[django.core.validators.MinLengthValidator(limit_value=10)], verbose_name='Endereço')),
                 ('endereco_bairro', models.CharField(max_length=50, validators=[django.core.validators.MinLengthValidator(limit_value=10)], verbose_name='Bairro')),
                 ('endereco_numero', models.IntegerField(validators=[django.core.validators.MaxLengthValidator(limit_value=7)], verbose_name='Número')),
@@ -66,7 +71,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('nome', models.CharField(max_length=100, unique=True, validators=[main.models.validate_letters], verbose_name='Nome')),
-                ('conselho_codigo', models.CharField(max_length=5, unique=True, validators=[main.models.validate_numbers], verbose_name='CRP')),
+                ('conselho_codigo', models.CharField(max_length=5, unique=True, validators=[
+                    main.models.validate_numbers], verbose_name='CRP')),
                 ('unimed_codigo', models.CharField(max_length=6, unique=True, validators=[main.models.validate_numbers], verbose_name='Número cadastro Unimed')),
                 ('email', models.EmailField(max_length=254, verbose_name='Email')),
                 ('telefone_numero', models.CharField(max_length=11, validators=[main.models.validate_numbers], verbose_name='Telefone')),

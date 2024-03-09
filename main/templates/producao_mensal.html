@@ -1,0 +1,39 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> Produção </title>
+</head>
+<body>
+
+<div class="page-container">
+
+{% block content %}
+<h1> Produção de  {{ terapeuta.nome }} </h1>
+    <h2> Período: {{ data_inicial }} - {{ data_final }} <br>
+         Total de atendimentos: {{ producao_count }}
+    </h2>
+    {% csrf_token %}
+    <ul>
+        <h2> Consultas Registradas: </h2>
+        {% for atendimento in atendimentos %}
+            <li>
+                Nome: {{ atendimento.consulta_paciente }} - {{ atendimento.consulta_convênio }} <br>
+                 Data: {{ atendimento.consulta_data }}
+            </li>
+        {% empty %}
+
+            <li>No entries found.</li>
+
+        {% endfor %}
+
+    </ul>
+{% endblock %}
+
+
+</body>
+</html>
