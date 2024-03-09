@@ -1,4 +1,6 @@
 from datetime import date
+from typing import Callable
+
 from django.contrib.auth import login as user_login
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.forms import AuthenticationForm
@@ -34,9 +36,6 @@ from .services.terapeutas_services import get_terapeutas_group, get_administrati
     associate_new_user_to_cadastro_profissional
 from .services.users_service import redirect_logged_user_to_home
 from .utils import get_selected_items, calculate_age
-
-
-# from wkhtmltopdf.views import PDFTemplateView
 
 
 def render_cadastro_paciente_form(request: HttpRequest, cadastro_form=None):
@@ -736,3 +735,7 @@ def religar_paciente(request: HttpRequest, prontuario_numero: str):
     }
 
     return render(request, 'relig_pac.html', context)
+
+
+def handle_error(request):
+    return render(request, 'error.html')
