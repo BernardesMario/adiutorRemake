@@ -1,8 +1,10 @@
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseNotFound, HttpRequest
-from typing import Union
-from main.models import CustomUser, CadastroProfissionais
+from django.http import HttpResponseNotFound, HttpRequest, HttpResponse
+from typing import Union, List
+from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais, CadastroPacientes
+from datetime import date
+from django.db.models.query import QuerySet
 
 
 def get_terapeutas_group() -> Group:
@@ -61,3 +63,50 @@ def associate_new_user_to_cadastro_profissional(new_user: CustomUser, terapeuta_
     except Exception as e:
         print("erro em associate_new_user_to_cadastro_profissional", str(e))
         return False
+
+
+def producao_generator(current_terapeuta: CadastroProfissionais, data_inicial: date,
+                       data_final: Union[date, None]) -> QuerySet:
+    """ Faz uma Query de todas as consultas registradas por determinado terapeuta
+    dentro de um espaço de tempo
+    """
+
+    if not data_final:
+        data_final = date.today()
+
+    producao = ProntuariosIndividuais.objects.filter(data_consulta__gte=data_inicial,
+                                                     data_consulta__lte=data_final,
+                                                     autor=current_terapeuta)
+
+    return producao
+
+
+def producao_detalhamento(producao: QuerySet) -> List:
+
+    results_list = []
+    try:
+        for atendimento in producao:
+
+            current_paciente = atendimento.numero
+
+            consulta_dict = {'consulta_data': atendimento.data_consulta,
+                             'consulta_paciente': current_paciente.nome,
+                             'consulta_prontuario': current_paciente.prontuario_numero,
+                             'consulta_convênio': current_paciente.convenio}
+
+            results_list.append(consulta_dict)
+
+    except Exception as e:
+        print("Occoreu um erro na crianção da produção:", e)
+
+        return HttpResponseNotFound
+
+    return results_list
+
+
+def sort_producao_detalhamento(producao: List) -> List:
+
+    sorted_list = sorted(producao, key=lambda x: (x['consulta_paciente'], x['consulta_data']))
+    print(sorted_list)
+
+    return sorted_list

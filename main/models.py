@@ -1,21 +1,21 @@
+import re
+
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, MaxLengthValidator
+from django.core.validators import MinLengthValidator
 from accounts.models import CustomUser
 from datetime import date
-import re
-import regex
-
-
-def validate_letters(value):
-    if not re.match(r"^[^\d]+$", str(value)):
-        raise ValidationError("Este campo pode conter apenas letras")
 
 
 def validate_numbers(value):
     if not re.match("^[0-9]+$", str(value)):
         raise ValidationError("Este campo pode conter apenas números")
+
+
+def validate_letters(value):
+    if not re.match(r"^[^\d]+$", str(value)):
+        raise ValidationError("Este campo pode conter apenas letras")
 
 
 def validate_date_past(value):
@@ -38,6 +38,8 @@ class CadastroPacientes(models.Model):
     responsavel_legal = models.CharField(verbose_name='Responsável Legal', max_length=100,
                                          null=True, blank=True, validators=[validate_letters,
                                                                             MinLengthValidator(limit_value=5)])
+    cpf_responsavel_legal = models.CharField(verbose_name='CPF do Responsável', max_length=11, blank=True, null=True,
+                                             validators=[validate_numbers, MinLengthValidator(limit_value=11)])
 
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
@@ -45,6 +47,7 @@ class CadastroPacientes(models.Model):
 
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
     cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True,
+                                  help_text="CPF de menores consta na Certidão de nascimento",
                                   validators=[validate_numbers, MinLengthValidator(limit_value=11)])
 
     MOD_CHOICES = (
@@ -291,6 +294,7 @@ class ProntuariosIndividuais(models.Model):
     data_entrada = models.DateField(auto_now_add=True, editable=False, verbose_name='Data da Entrada')
     data_consulta = models.DateField(verbose_name='Data da Consulta', validators=[validate_date_past])
     entrada = models.TextField(verbose_name='Parecer', validators=[MinLengthValidator(limit_value=10)])
+
     objects = models.Manager()
 
     def __str__(self):
@@ -304,14 +308,33 @@ class ProntuariosIndividuais(models.Model):
         ]
 
 
+def terapeutas_media_upload_path(instance, filename):
+    """ Cria um path name personalizado para upload the arquivos
+       baseado no CRP do terapeuta associado à midia
+       """
+    terapeuta_number = instance.terapeuta.conselho_codigo
+
+    # upload_path = os.path.join('media', terapeuta_number, 'pdfs', filename)
+    upload_path = "terapeuta_{0}/{1}".format(terapeuta_number, filename)
+
+    return upload_path
+
+
 class HistoricoAcademico(models.Model):
     profissonal = models.ForeignKey('CadastroProfissionais',
                                     on_delete=models.PROTECT,
                                     verbose_name='Terapeuta')
     curso = models.CharField(verbose_name='Curso', max_length=30, validators=[validate_letters])
-    instituicao = models.CharField(verbose_name='Instituição', max_length=50, validators=[validate_letters])
-    ano_conclusao = models.CharField(verbose_name='Ano de Conclusão', max_length=4,
-                                     validators=[validate_numbers, MinLengthValidator(limit_value=4)])
+
+    instituicao = models.CharField(verbose_name='Instituição', max_length=50,
+                                   validators=[validate_letters, MinLengthValidator(limit_value=4)])
+
+    ano_conclusao = models.IntegerField(verbose_name='Ano de Conclusão', max_length=4,
+                                        validators=[validate_numbers, MinLengthValidator(limit_value=4)])
+
+    certificado_conclusao = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=False,
+                                             verbose_name='Certificado de Conclusão', help_text='Apenas arquivos PDF')
+
     objects = models.Manager()
 
     def __str__(self):
@@ -320,3 +343,62 @@ class HistoricoAcademico(models.Model):
     class Meta:
         verbose_name = 'Histórico Acadêmico'
         verbose_name_plural = 'Históricos Acadêmicos'
+
+
+def pacientes_media_upload_path(instance, filename):
+    """ Cria um path name personalizado para upload the arquivos
+    baseado no numero de prontuario do paciente associado à midia
+    """
+
+    paciente_number = instance.paciente.prontuario
+
+    # upload_path = os.path.join('media', client_number, 'pdfs', filename)
+    upload_path = "paciente_{0}/{1}".format(paciente_number, filename)
+
+    return upload_path
+
+
+class PacientesMedia(models.Model):
+
+    paciente = models.ForeignKey('CadastroPacientes', on_delete=models.CASCADE, related_name='arquivos',
+                                 verbose_name='Paciente', help_text='Paciente relacionado')
+
+    pdf_file = models.FileField(upload_to=pacientes_media_upload_path, blank=True, null=True, verbose_name='PDF',
+                                help_text='Arquivos PDF')
+
+    image_files = models.ImageField(upload_to=pacientes_media_upload_path, blank=True, null=True,
+                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
+
+    description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'{self.paciente} - {self.description}'
+
+    class Meta:
+        verbose_name = 'Arquivo de Paciente'
+        verbose_name_plural = 'Arquivos de Pacientes'
+
+
+class ProfissionaisMedia(models.Model):
+
+    terapeuta = models.ForeignKey('CadastroProfissionais', on_delete=models.CASCADE, related_name='arquivos',
+                                  verbose_name='Terapeuta', help_text='Terapeuta relacionado')
+
+    pdf_file = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=True, verbose_name='PDF',
+                                help_text='Arquivos PDF')
+
+    image_files = models.ImageField(upload_to=terapeutas_media_upload_path, blank=True, null=True,
+                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
+
+    description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')
+
+    objects = models.Manager()
+
+    def __str__(self):
+        return f'{self.terapeuta} - {self.description}'
+
+    class Meta:
+        verbose_name = 'Arquivo de Terapeuta'
+        verbose_name_plural = 'Arquivos de Terapeuta'
