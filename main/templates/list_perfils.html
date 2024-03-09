@@ -36,10 +36,10 @@
         {% endfor %}
     <ul>
         <h2> Terapeutas: </h2>
-        {% for terapeuta in lis_terapeutas %}
+        {% for terapeuta in list_terapeutas %}
             <li>
                 {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }}
-                <a href="{% url 'main:mod_info_prof' id=terapeuta.id %}"> Modificar </a> <br>
+                <a href="{% url 'main:mod_info_prof' terapeuta_codigo=terapeuta.conselho_codigo %}"> Modificar </a> <br>
             </li>
         {% empty %}
             <li>No entries found.</li>

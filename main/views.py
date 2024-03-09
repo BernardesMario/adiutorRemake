@@ -11,7 +11,8 @@ from verify_email.email_handler import send_verification_email
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuarioForm, CadastrarConveniosForm,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm, UpdatePacienteForm,
                     CadastroGrupoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
-                    AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm)
+                    AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm, GenerateProducaoForm,
+                    HistoricoAcademicoForm)
 from .models import (CadastroPacientes, ProntuariosIndividuais, CadastroGrupos,
                      ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
 from .services.file_service import render_to_pdf
@@ -31,7 +32,7 @@ from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta
                                           registro_prontuario_religamento_paciente, filter_inactive_pacientes)
 
 from .services.terapeutas_services import get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta, \
-    associate_new_user_to_cadastro_profissional
+    associate_new_user_to_cadastro_profissional, producao_generator, producao_detalhamento
 from .services.users_service import redirect_logged_user_to_home
 from .utils import get_selected_items, calculate_age
 
@@ -171,7 +172,7 @@ def index(request: HttpRequest):
 @login_required(login_url="/main/login")
 # TODO criar permissão para visualização de prontuario
 def list_entradas(request: HttpRequest, prontuario_numero: str, as_pdf=False):
-    """View para exibir o prontuario de um paciente individual
+    """View para exibir o prontuario individual de um paciente
     """
     current_user_terapeuta = get_current_user_terapeuta(request)
     current_paciente = get_current_paciente(prontuario_numero)
@@ -416,7 +417,8 @@ def render_transfer_paciente_form(request: HttpRequest, transfer_form=None):
 @permission_required('main.transfer_pac', raise_exception=True)
 def transferir_paciente(request: HttpRequest, prontuario_numero: str) -> HttpResponse:
     """View para transferir pacientes individuais de
-    um terapeuta para outro """
+    um terapeuta para outro
+    """
 
     sucesso = False
     if request.method != 'POST':
@@ -661,6 +663,8 @@ def novo_convenio(request: HttpRequest):
 
 @login_required(login_url="/main/login")
 def detalhes_paciente(request: HttpRequest, prontuario_numero: str):
+    """ Exibe informações cadastradas sobre um paciente
+    """
     current_paciente = get_current_paciente(prontuario_numero)
     nascimento = current_paciente.nascimento
     idade_paciente = calculate_age(nascimento)
@@ -736,3 +740,80 @@ def religar_paciente(request: HttpRequest, prontuario_numero: str):
     }
 
     return render(request, 'relig_pac.html', context)
+
+
+def render_producao_mensal_form(request, producao_form=None):
+
+    current_user_terapeuta = get_current_user_terapeuta(request)
+
+    if not producao_form:
+        producao_form = GenerateProducaoForm(initial={'terapeuta': current_user_terapeuta})
+
+    context = {
+        'form': producao_form
+    }
+
+    return render(request, 'gerar_producao.html', context)
+
+
+@login_required(login_url="/main/login")
+def producao_mensal(request: HttpRequest):
+    """ View para gerar uma tabela das consultas realizadas
+    em um determinado espaço de tempo por um terapeuta especifico
+    """
+
+    if request.method != 'POST':
+        return render_producao_mensal_form(request)
+
+    producao_form = GenerateProducaoForm(request.POST)
+
+    if not producao_form.is_valid():
+        return render_producao_mensal_form(request, producao_form)
+
+    current_terapeuta = producao_form.cleaned_data['terapeuta']
+    data_inicial = producao_form.cleaned_data['data_inicial']
+    data_final = producao_form.cleaned_data['data_final']
+
+    atendimentos_cadastrados = producao_generator(current_terapeuta, data_inicial, data_final)
+
+    producao_count = len(atendimentos_cadastrados)
+
+    detalhamento_producao = producao_detalhamento(atendimentos_cadastrados)
+
+    context = {
+        'form': producao_form,
+        'terapeuta': current_terapeuta,
+        'atendimentos': detalhamento_producao,
+        'producao_count': producao_count,
+        'data_inicial': data_inicial,
+        'data_final': data_final
+            }
+
+    return render(request, 'producao_mensal.html', context)
+
+
+def render_historico_academico_form(request, historico_form=None):
+    if not historico_form:
+        historico_form = HistoricoAcademicoForm()
+
+    context = {
+        'form': historico_form
+    }
+
+    return render(request, 'HISTORICO.PLACEHOLDER', context)
+
+
+def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
+    """ View para cadastrar historico academico de terapeutas
+    """
+    if request.method != 'POST':
+        return render_historico_academico_form(request)
+
+    historico_form = HistoricoAcademicoForm(request.POST)
+
+    if not historico_form.is_valid():
+        return render_historico_academico_form(request, historico_form)
+
+
+def modificar_cadastro_profissionais(request: HttpRequest, terapeuta_codigo: str):
+    pass

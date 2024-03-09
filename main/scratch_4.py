@@ -73,3 +73,12 @@ def add_entrada_sessao_grupo(request, prontuario_grupo_numero):
     }
 
     return render(request, 'nova_entrada_grupo.html', context)
+
+
+def user_directory_path(instance, filename):
+    # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+
+    # upload_path = "user_{0}/{1}".format(instance.user.id, filename)
+
+    return "user_{0}/{1}".format(instance.terapeuta.conselho_codigo, filename)
+

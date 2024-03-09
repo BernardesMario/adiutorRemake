@@ -1,11 +1,11 @@
 {% extends 'middleman1.html' %}
 
 
-{% block title %}Prontuário{% endblock %}
+{% block title %} Prontuário {% endblock %}
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-baseline">
-        <h1>Prontuário de {{ paciente.nome }}</h1>
+        <h1> Prontuário de {{ paciente.nome }}</h1>
         {% url 'main:prontuario' prontuario_numero=prontuario_numero as download_url %}
         <a href="{{ download_url }}?as_pdf=1" target="_blank">
             <span class="material-icons fs-1">print</span>
@@ -17,7 +17,7 @@
     {% for prontuario in prontuarios %}
         <div class="card mb-2">
             <div class="card-header">
-                Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }}</strong><br>
+                Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }} / {{ current_user.conselho_codigo}}</strong><br>
             </div>
             <div class="card-body">
                 {{ prontuario.entrada }}

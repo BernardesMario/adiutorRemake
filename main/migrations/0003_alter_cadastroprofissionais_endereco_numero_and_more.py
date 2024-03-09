@@ -3,6 +3,7 @@
 import django.core.validators
 from django.db import migrations, models
 import main.models
+import main.utils
 
 
 class Migration(migrations.Migration):

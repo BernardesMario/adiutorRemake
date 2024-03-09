@@ -1,17 +1,99 @@
-<div class="d-flex justify-content-between align-items-baseline">
-    <h1>Prontuário de {{ paciente.nome }}</h1>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Prontuário </title>
+<style>
 
 
-{% for prontuario in prontuarios %}
-    <div class="card mb-2">
-        <div class="card-header">
-            Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }}</strong><br>
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: roboto;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 100px;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .prontuarios {
+        width: 100%;
+        max-width: 800px;
+        padding: 0 20px;
+    }
+
+    .card {
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 5px;
+    }
+
+    .card-header {
+        padding: 5px;
+        background-color: #f5f5f5;
+    }
+
+    .card-body {
+        padding: 5px;
+    }
+
+    .footer {
+        text-align: center;
+        background-color: #f5f5f5;
+        padding: 20px;
+        width: 100%;
+        position: absolute;
+        bottom: 0;
+    }
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Prontuário de {{ paciente.nome }} <strong> - </strong> {{ paciente.prontuario_numero }} </h1>
         </div>
-        <div class="card-body">
-            {{ prontuario.entrada }}
+        <div>
+            Paciente: {{ paciente.nome }} - {{ paciente.cpf_numero }} <br>
+            Data de Nascimento: {{ paciente.nascimento }} <br>
+            Responsável: {{ paciente.responsavel }} - {{ cpf_responsavel_legal }} <br>
+            Data de início: {{ paciente.data_inicio }} <br>
+            Data final: {{ paciente.data_final }} <br>
+        </div>
+
+        <div class="prontuarios">
+            {% for prontuario in prontuarios %}
+            <div class="card">
+                <div class="card-header">
+                    Em <strong>{{ prontuario.data_consulta }}</strong>, por <strong>{{ prontuario.autor }} / {{ current_user.conselho_codigo }}</strong><br>
+                </div>
+                <div class="card-body">
+                    {{ prontuario.entrada }}
+                </div>
+            </div>
+            {% empty %}
+            <p>Nenhuma entrada encontrada neste prontuário.</p>
+            {% endfor %}
         </div>
     </div>
-{% empty %}
-    <li>Nenhuma entrada encontrada neste prontuário.</li>
-{% endfor %}
+
+    <footer class="footer">
+        Rua Corália Ferreira da Luz, 15 - Centro - Florianópolis/SC - 88.020-650 - (48) 3222-1707 / 99668-0011 CRPJ 12/0082 <br>
+        www.locuspsicodrama.com.br E-mail: contato@locuspsicodrama.com.br
+    </footer>
+</body>
+</html>
