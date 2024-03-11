@@ -58,6 +58,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'main.middlewares.error_handling_middleware.ErrorHandlingMiddleware'
 ]
 
 ROOT_URLCONF = 'adiutor.urls'
@@ -141,6 +143,9 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'adiutor.noreply@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'vrcnlsutlezbbljm')
+
+# GITHUB
+GITHUB_PAT = os.environ.get('GITHUB_PAT', '')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
