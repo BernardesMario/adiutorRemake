@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponse
 from typing import Union, List
-from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais, CadastroPacientes
+from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais
 from datetime import date
 from django.db.models.query import QuerySet
 
@@ -110,3 +110,10 @@ def sort_producao_detalhamento(producao: List) -> List:
     print(sorted_list)
 
     return sorted_list
+
+
+def get_terapeuta_by_codigo(terapeuta_codigo: str) -> CadastroProfissionais:
+
+    terapeuta = CadastroProfissionais.objects.get(conselho_codigo=terapeuta_codigo)
+
+    return terapeuta

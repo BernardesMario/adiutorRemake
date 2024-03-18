@@ -39,7 +39,8 @@
         {% for terapeuta in list_terapeutas %}
             <li>
                 {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }}
-                <a href="{% url 'main:mod_info_prof' terapeuta_codigo=terapeuta.conselho_codigo %}"> Modificar </a> <br>
+                <a href="{% url 'main:cadastrar_formacao' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Formação </a> <br>
+
             </li>
         {% empty %}
             <li>No entries found.</li>

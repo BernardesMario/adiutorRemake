@@ -1,11 +1,37 @@
+import os
 import re
-
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, MaxLengthValidator
 from accounts.models import CustomUser
-from datetime import date
+from datetime import date, datetime
+
+
+def create_prontuario_numero():
+    """ Cria um novo numero de prontuário, baseado na regra:
+    Prontuario = XX + YYYYY onde = XX é a década do ano atual (24, em 2024)
+    seguido da numeração identificadora em ordem
+    """
+
+    last_paciente = CadastroPacientes.objects.order_by('-prontuario_numero').first()
+    last_prontuario_numero = last_paciente.prontuario_numero
+
+    last_prontuario_numero_identificador = last_prontuario_numero[-5:]
+
+    novo_prontuario_numero_identificador = int(last_prontuario_numero_identificador.lstrip('0')) + 1
+
+    novo_prontuario_numero_identificador_str = str(novo_prontuario_numero_identificador)
+
+    novo_prontuario_numero_identificador_str = '0' * (5 - len(novo_prontuario_numero_identificador_str)) + novo_prontuario_numero_identificador_str
+
+    ano_str = str(datetime.now().year)
+
+    prontuario_inicio = ano_str[2:]
+
+    novo_prontuario_numero = prontuario_inicio + novo_prontuario_numero_identificador_str
+
+    return novo_prontuario_numero
 
 
 def validate_numbers(value):
@@ -30,9 +56,8 @@ def validate_date_past(value):
 class CadastroPacientes(models.Model):
     nome = models.CharField(verbose_name='Nome do Paciente', max_length=100,
                             validators=[validate_letters, MinLengthValidator(limit_value=5)])
-    prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7,
-                                         unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=7)]
-                                         )
+    prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7, default=create_prontuario_numero,
+                                         unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=7)])
     nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa',
                                   validators=[validate_date_past])
     responsavel_legal = models.CharField(verbose_name='Responsável Legal', max_length=100,
@@ -41,13 +66,13 @@ class CadastroPacientes(models.Model):
     cpf_responsavel_legal = models.CharField(verbose_name='CPF do Responsável', max_length=11, blank=True, null=True,
                                              validators=[validate_numbers, MinLengthValidator(limit_value=11)])
 
-    data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
+    data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa', default=datetime.now)
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
                                   validators=[validate_date_past])
 
     desligado = models.BooleanField(verbose_name='Desligado', help_text='Paciente desligado', default=False)
     cpf_numero = models.CharField(verbose_name='CPF', max_length=11, unique=True,
-                                  help_text="CPF de menores consta na Certidão de nascimento",
+                                  help_text="CPF de menores consta na Certidão de Nascimento",
                                   validators=[validate_numbers, MinLengthValidator(limit_value=11)])
 
     MOD_CHOICES = (
@@ -109,24 +134,25 @@ class CadastroPacientes(models.Model):
 
 class ConveniosAceitos(models.Model):
     nome = models.CharField(verbose_name='Convênio', max_length=50, validators=[MinLengthValidator(limit_value=3)])
-    cnpj_numero = models.CharField(verbose_name='CNPJ', max_length=14, validators=[validate_numbers,
-                                                                                   MinLengthValidator(limit_value=14)])
-    endereco_rua = models.CharField(verbose_name='Endereço', max_length=100,
+    cnpj_numero = models.CharField(verbose_name='CNPJ', max_length=14, blank=False, null=True,
+                                   validators=[validate_numbers, MinLengthValidator(limit_value=14)])
+    endereco_rua = models.CharField(verbose_name='Endereço', max_length=100, blank=False, null=True,
                                     validators=[MinLengthValidator(limit_value=10)])
-    endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50,
+    endereco_bairro = models.CharField(verbose_name='Bairro', max_length=50, blank=False, null=True,
                                        validators=[MinLengthValidator(limit_value=3)])
-    endereco_numero = models.CharField(verbose_name='Número', max_length=7, validators=[validate_numbers])
-    endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100,
+    endereco_numero = models.CharField(verbose_name='Número', max_length=7, blank=False, null=True,
+                                       validators=[validate_numbers])
+    endereco_complemento = models.CharField(verbose_name='Complemento', max_length=100, blank=False, null=True,
                                             validators=[MinLengthValidator(limit_value=4)])
-    cidade = models.CharField(verbose_name='Cidade', max_length=20, validators=[validate_letters,
-                                                                                MinLengthValidator(limit_value=3)])
-    cep_numero = models.CharField(verbose_name='CEP', max_length=8, validators=[validate_numbers,
-                                                                                MinLengthValidator(limit_value=8)])
-    responsavel_contato = models.CharField(verbose_name='Nome do Resposável', max_length=50,
+    cidade = models.CharField(verbose_name='Cidade', max_length=20, blank=False, null=True,
+                              validators=[validate_letters, MinLengthValidator(limit_value=3)])
+    cep_numero = models.CharField(verbose_name='CEP', max_length=8, blank=False, null=True,
+                                  validators=[validate_numbers, MinLengthValidator(limit_value=8)])
+    responsavel_contato = models.CharField(verbose_name='Nome do Resposável', max_length=50, blank=False, null=True,
                                            validators=[validate_letters, MinLengthValidator(limit_value=3)])
-    telefone_numero = models.CharField(verbose_name='Telefone', max_length=11,
+    telefone_numero = models.CharField(verbose_name='Telefone', max_length=11, blank=False, null=True,
                                        validators=[validate_numbers, MinLengthValidator(limit_value=11)])
-    email = models.EmailField(verbose_name='E-mail para Contato')
+    email = models.EmailField(verbose_name='E-mail para Contato', blank=False, null=True,)
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
 
@@ -314,14 +340,15 @@ def terapeutas_media_upload_path(instance, filename):
        """
     terapeuta_number = instance.terapeuta.conselho_codigo
 
-    # upload_path = os.path.join('media', terapeuta_number, 'pdfs', filename)
-    upload_path = "terapeuta_{0}/{1}".format(terapeuta_number, filename)
+    upload_path = os.path.join('media', terapeuta_number, filename)
+    # upload_path = "terapeuta_{0}/{1}".format(terapeuta_number, filename)
 
     return upload_path
 
 
 class HistoricoAcademico(models.Model):
-    profissonal = models.ForeignKey('CadastroProfissionais',
+
+    terapeuta = models.ForeignKey('CadastroProfissionais',
                                     on_delete=models.PROTECT,
                                     verbose_name='Terapeuta')
     curso = models.CharField(verbose_name='Curso', max_length=30, validators=[validate_letters])
@@ -329,8 +356,8 @@ class HistoricoAcademico(models.Model):
     instituicao = models.CharField(verbose_name='Instituição', max_length=50,
                                    validators=[validate_letters, MinLengthValidator(limit_value=4)])
 
-    ano_conclusao = models.IntegerField(verbose_name='Ano de Conclusão', max_length=4,
-                                        validators=[validate_numbers, MinLengthValidator(limit_value=4)])
+    ano_conclusao = models.CharField(verbose_name='Ano de Conclusão', null=False, max_length=4,
+                                     validators=[validate_numbers,MinLengthValidator(limit_value=4)])
 
     certificado_conclusao = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=False,
                                              verbose_name='Certificado de Conclusão', help_text='Apenas arquivos PDF')
@@ -352,8 +379,8 @@ def pacientes_media_upload_path(instance, filename):
 
     paciente_number = instance.paciente.prontuario
 
-    # upload_path = os.path.join('media', client_number, 'pdfs', filename)
-    upload_path = "paciente_{0}/{1}".format(paciente_number, filename)
+    upload_path = os.path.join('media', paciente_number, filename)
+    # upload_path = "paciente_{0}/{1}".format(paciente_number, filename)
 
     return upload_path
 

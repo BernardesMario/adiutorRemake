@@ -1,8 +1,7 @@
-import re
-from datetime import date, timedelta
+from django.db.models.fields.files import File, ImageFile
+from datetime import date
 from dateutil.relativedelta import relativedelta
 from typing import List, Union
-from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 
 
@@ -46,3 +45,18 @@ def certificado_year_validator(input_year: int) -> bool:
     is_valid = entry_value > min_value
 
     return is_valid
+
+
+def media_form_ensure_file(text_file: File, image_file: ImageFile) -> bool:
+
+    if not text_file or not image_file:
+        return False
+
+    return True
+
+
+def validate_image_file_extension(value):
+    if value.name.split('.')[-1] not in ['jpg', 'jpeg', 'png', 'gif']:
+        return False
+
+    return True

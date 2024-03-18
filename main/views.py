@@ -14,7 +14,7 @@ from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaPron
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm, UpdatePacienteForm,
                     CadastroGrupoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm, GenerateProducaoForm,
-                    HistoricoAcademicoForm)
+                    HistoricoAcademicoForm, TerapeutaMediaUploadForm, PacienteMediaUploadForm)
 from .models import (CadastroPacientes, ProntuariosIndividuais, CadastroGrupos,
                      ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
 from .services.file_service import render_to_pdf
@@ -34,7 +34,7 @@ from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta
                                           registro_prontuario_religamento_paciente, filter_inactive_pacientes)
 
 from .services.terapeutas_services import get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta, \
-    associate_new_user_to_cadastro_profissional, producao_generator, producao_detalhamento
+    associate_new_user_to_cadastro_profissional, producao_generator, producao_detalhamento, get_terapeuta_by_codigo
 from .services.users_service import redirect_logged_user_to_home
 from .utils import get_selected_items, calculate_age
 
@@ -73,6 +73,7 @@ def cadastrar_paciente(request: HttpRequest):
 
 
 def render_cadastro_grupo_form(request: HttpRequest, grupo_form=None):
+
     current_user_terapeuta = get_current_user_terapeuta(request)
 
     if not grupo_form:
@@ -795,28 +796,132 @@ def producao_mensal(request: HttpRequest):
     return render(request, 'producao_mensal.html', context)
 
 
-def render_historico_academico_form(request, historico_form=None):
+def render_historico_academico_form(request, terapeuta_codigo: str, historico_form=None):
+
+    current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
+
     if not historico_form:
-        historico_form = HistoricoAcademicoForm()
+        historico_form = HistoricoAcademicoForm(initial={'profissonal': current_terapeuta})
 
     context = {
-        'form': historico_form
+        'form': historico_form,
+        'terapeuta': current_terapeuta
     }
 
-    return render(request, 'HISTORICO.PLACEHOLDER', context)
+    return render(request, 'historico_academico.html', context)
 
 
 def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
     """ View para cadastrar historico academico de terapeutas
     """
-    if request.method != 'POST':
-        return render_historico_academico_form(request)
 
-    historico_form = HistoricoAcademicoForm(request.POST)
+    current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
+
+    if request.method != 'POST':
+        return render_historico_academico_form(request, terapeuta_codigo)
+
+    historico_form = HistoricoAcademicoForm(request.POST, request.FILES)
 
     if not historico_form.is_valid():
-        return render_historico_academico_form(request, historico_form)
+        print(historico_form.errors)
+
+        return render_historico_academico_form(request, terapeuta_codigo, historico_form)
+
+    historico = historico_form.save(commit=False)
+    historico.terapeuta = current_terapeuta
+    historico.save()
+
+    sucesso = True
+    context = {
+        'sucesso': sucesso,
+        'form': historico_form,
+        'terapeuta': current_terapeuta
+    }
+
+    return render(request, 'historico_academico.html', context)
 
 
 def modificar_cadastro_profissionais(request: HttpRequest, terapeuta_codigo: str):
     pass
+
+
+def render_terapeuta_media_form(request, terapeuta_media_form=None):
+    if not terapeuta_media_form:
+        terapeuta_media_form = TerapeutaMediaUploadForm()
+
+    context = {
+        'form': terapeuta_media_form
+    }
+    # TODO Create HTML and url
+
+    return render(request, 'HTML-PLACEHOLDER', context)
+
+
+def terapeuta_media_upload(request, terapeuta_codigo: str):
+    """View para upload de arquivos relacionados a Terapeutas
+    """
+
+    current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
+
+    if request.method != 'POST':
+        return render_terapeuta_media_form(request, terapeuta_codigo)
+
+    terapeuta_media_form = TerapeutaMediaUploadForm(request.POST, request.FILES)
+
+    if not terapeuta_media_form.is_valid():
+        print(terapeuta_media_form.errors)
+
+        return render_terapeuta_media_form(request, terapeuta_media_form)
+
+    terapeuta_media = terapeuta_media_form.save(commit=False)
+    terapeuta_media.terapeuta = current_terapeuta
+    terapeuta_media.save()
+
+    sucesso = True
+    context = {
+        'sucesso': sucesso,
+        'form': terapeuta_media_form,
+        'terapeuta': current_terapeuta
+    }
+    # TODO Create HTML and url
+
+    return render(request, 'PLACEHOLDER.html', context)
+
+
+def render_paciente_media_form(request, paciente_media_form=None):
+    if not paciente_media_form:
+        paciente_media_form = PacienteMediaUploadForm
+
+    context = {
+        'form': paciente_media_form,
+    }
+    # TODO Create HTML and url
+
+    return render(request, 'PLACEHOLDER.html', context)
+
+
+def paciente_media_upload(request, prontuario_numero: str):
+    if request.method != 'POST':
+        return render_paciente_media_form(request)
+
+    paciente_media_form = PacienteMediaUploadForm(request.POST, request.FILES)
+
+    if not paciente_media_form.is_valid():
+        print(paciente_media_form.errors)
+
+        return render_terapeuta_media_form(request, paciente_media_form)
+
+    current_paciente = get_current_paciente(prontuario_numero)
+
+    paciente_media = paciente_media_form.save(commit=False)
+    paciente_media.paciente = current_paciente
+    paciente_media.save()
+
+    sucesso = True
+    context = {
+        'sucesso': sucesso,
+        'form': paciente_media_form,
+        'paciente': current_paciente
+    }
+    # TODO Create HTML and url
+    return render(request, 'PLACEHOLDER.html', context)

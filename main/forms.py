@@ -7,16 +7,16 @@ from datetime import date
 import re
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
                      ConveniosAceitos, ProntuariosIndividuais, ProntuariosGrupos, validate_numbers, validate_letters,
-                     HistoricoAcademico)
+                     HistoricoAcademico, ProfissionaisMedia, PacientesMedia)
 from accounts.models import CustomUser
-from .services.pacientes_services import (is_data_nova_consulta_group_valid, is_paciente_menor_acompanhado,
-                                          is_data_nova_consulta_individual_valid,
-                                          cpf_responsavel_required_when_responsavel)
-from .utils import is_date_not_future, certificado_year_validator
+from .services.pacientes_services import (is_data_nova_consulta_group_valid)
+from .services.pacientes_forms_services import is_paciente_menor_acompanhado, cpf_responsavel_required_when_responsavel, \
+    is_data_nova_consulta_individual_valid, ensure_paciente_convenio_carteirinha
+from .utils import is_date_not_future, certificado_year_validator, calculate_age, validate_image_file_extension, \
+    media_form_ensure_file
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
-
     phone_number = forms.CharField(validators=[
         validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)])
     username = forms.CharField(validators=[validate_letters])
@@ -36,7 +36,6 @@ class TerapeutaRegistrationForm(UserCreationForm):
 
 
 class CadastroProfissionaisForm(forms.ModelForm):
-
     nome = forms.CharField(validators=[validate_letters])
     endereco_rua = forms.CharField(validators=[validate_letters])
     endereco_bairro = forms.CharField(validators=[validate_letters])
@@ -60,10 +59,10 @@ class CadastroProfissionaisForm(forms.ModelForm):
         }
 
     def _raise_if_nascimento_is_invalid(self):
-        nascimento_data = self.cleaned_data['nascimento_data']
+        nascimento_data = self.cleaned_data.get('nascimento_data')
 
         if nascimento_data is None or not is_date_not_future(nascimento_data):
-            raise forms.ValidationError('Data inválida')
+            raise forms.ValidationError('Data de Nascimento Inválida')
 
 
 class CadastroPacienteForm(forms.ModelForm):
@@ -110,30 +109,45 @@ class CadastroPacienteForm(forms.ModelForm):
         }
 
     def _raise_if_nascimento_is_invalid(self):
-        nascimento_data = self.cleaned_data('nascimento')
-        print("_raise_if_nascimento rodou")
+        nascimento_data = self.cleaned_data.get('nascimento')
 
         if nascimento_data is None or not is_date_not_future(nascimento_data):
-            raise forms.ValidationError('Data inválida')
+            raise forms.ValidationError('Data de Nascimento inválida!')
+
+    def _raise_if_paciente_menor_idade_minina(self):
+        nascimento_data = self.cleaned_data.get('nascimento')
+        paciente_idade = calculate_age(nascimento_data)
+        idade_minima = 3
+
+        if paciente_idade < idade_minima:
+            raise forms.ValidationError('Paciente possui idade inferior a 3 anos completos!')
 
     def _raise_if_inicio_is_invalid(self):
-        data_inicio = self.cleaned_data('data_inicio')
-        print("_raise_if_inicio rodou")
+        data_inicio = self.cleaned_data.get('data_inicio')
+
         if data_inicio is None or not is_date_not_future(data_inicio):
-            raise forms.ValidationError('Data inválida')
+            raise forms.ValidationError('Data de Inicio inválida')
 
     def _raise_if_menor_desacompanhado(self):
         nascimento = self.cleaned_data.get('nascimento')
         responsavel_legal = self.cleaned_data.get('responsavel_legal')
-        print("função rodou")
+
         if not is_paciente_menor_acompanhado(nascimento, responsavel_legal):
-            raise forms.ValidationError('Pacientes menores de idade devem estar acompanhados por responsável legal')
+            raise forms.ValidationError('Pacientes menores de idade devem estar acompanhados por responsável legal!')
 
     def _raise_if_acompanhante_sem_cpf(self):
         responsavel_legal = self.cleaned_data.get('responsavel_legal')
         cpf_responsavel_legal = self.cleaned_data.get('cpf_responsavel_legal')
+
         if not cpf_responsavel_required_when_responsavel(responsavel_legal, cpf_responsavel_legal):
             raise forms.ValidationError('CPF do responsável não pode estar em branco!')
+
+    def _raise_if_paciente_convenio_sem_carteirinha(self):
+        convenio = self.cleaned_data.get('convenio')
+        carteirinha_convenio = self.cleaned_data.get('carteirinha_convenio')
+
+        if not ensure_paciente_convenio_carteirinha(convenio, carteirinha_convenio):
+            raise forms.ValidationError('Campo "Carteirinha Conveio" Obrigatório para pacientes de Planos de Saude!')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -141,6 +155,8 @@ class CadastroPacienteForm(forms.ModelForm):
         self._raise_if_nascimento_is_invalid()
         self._raise_if_inicio_is_invalid()
         self._raise_if_acompanhante_sem_cpf()
+        self._raise_if_paciente_menor_idade_minina()
+        self._raise_if_paciente_convenio_sem_carteirinha()
         return cleaned_data
 
 
@@ -159,8 +175,7 @@ class CadastroPacienteNovoForm(forms.ModelForm):
         responsavel_legal = cleaned_data.get('responsavel_legal')
 
         if nascimento:
-            hoje = date.today()
-            idade_paciente = hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
+            idade_paciente = calculate_age(nascimento)
 
             if idade_paciente < 18 and not responsavel_legal:
                 raise forms.ValidationError("Pacientes menores de idade devem ter um responsável legal")
@@ -186,7 +201,6 @@ class CadastroPacienteNovoForm(forms.ModelForm):
 
 
 class CadastroGrupoForm(forms.ModelForm):
-
     prontuario_grupo_numero = forms.CharField(validators=[validate_numbers])
 
     class Meta:
@@ -202,7 +216,6 @@ class CadastroGrupoForm(forms.ModelForm):
 
 
 class AdicionarPacGrupoForm(forms.ModelForm):
-
     class Meta:
         model = CadastroPacientes
         fields = ['grupo']
@@ -237,7 +250,7 @@ class EntradaProntuarioForm(forms.ModelForm):
         data_consulta = self.cleaned_data.get('data_consulta')
 
         if data_consulta is None or not is_date_not_future(data_consulta):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data da Consulta Inválida!')
 
     def _raise_if_data_consulta_not_valid(self):
         data_consulta = self.cleaned_data.get('data_consulta')
@@ -253,7 +266,6 @@ class EntradaProntuarioForm(forms.ModelForm):
 
 
 class EntradaProntuarioGrupoForm(forms.ModelForm):
-
     class Meta:
         model = ProntuariosGrupos
         fields = ['data_consulta', 'entrada']
@@ -267,10 +279,10 @@ class EntradaProntuarioGrupoForm(forms.ModelForm):
         data_consulta = self.cleaned_data.get('data_consulta')
 
         if data_consulta is None or not is_date_not_future(data_consulta):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data da Consulta Inválida!')
 
     def _raise_if_data_consulta_is_invalid(self):
-        data_nova_entrada = self.cleaned_data['data_consulta']
+        data_nova_entrada = self.cleaned_data.get('data_consulta')
 
         if not is_data_nova_consulta_group_valid(self.initial['numero'], data_nova_entrada):
             raise forms.ValidationError('O grupo possui consultas posteriores a data informada!')
@@ -302,10 +314,10 @@ class PacienteDesligamentoForm(forms.ModelForm):
         data_final = self.cleaned_data.get('data_final')
 
         if data_final is None or not is_date_not_future(data_final):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data Final Inválida!')
 
     def _raise_if_data_final_is_invalid(self):
-        data_nova_entrada = self.cleaned_data['data_final']
+        data_nova_entrada = self.cleaned_data.get('data_final')
 
         if not is_data_nova_consulta_individual_valid(self.initial['numero'], data_nova_entrada):
             raise forms.ValidationError('O paciente possui consultas posteriores a data informada!')
@@ -337,12 +349,11 @@ class GrupoDesligamentoForm(forms.ModelForm):
         data_final = self.cleaned_data.get('data_final')
 
         if data_final is None or not is_date_not_future(data_final):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data Final Inválida!')
 
     def _raise_if_data_final_not_valid(self):
         data_final = self.cleaned_data.get('data_final')
 
-#        if not is_data_nova_consulta_valid(self.initial['prontuario_grupo_numero'], data_final):
         if not is_data_nova_consulta_group_valid(self.initial['prontuario_grupo_numero'], data_final):
             raise forms.ValidationError('Grupo possui consultas posteriores a data informada!')
 
@@ -354,7 +365,6 @@ class GrupoDesligamentoForm(forms.ModelForm):
 
 
 class PacienteTransferenciaForm(forms.ModelForm):
-
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -373,7 +383,6 @@ class PacienteTransferenciaForm(forms.ModelForm):
 
 
 class GrupoTrasferenciaForm(forms.ModelForm):
-
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -392,7 +401,6 @@ class GrupoTrasferenciaForm(forms.ModelForm):
 
 
 class ReligarPacienteForm(forms.ModelForm):
-
     novo_terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -401,8 +409,8 @@ class ReligarPacienteForm(forms.ModelForm):
     data_retorno = forms.DateField(
         label='Data Retorno',
         widget=forms.DateInput(
-                attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
-            ),
+            attrs={'type': 'date', 'placeholder': 'dd/mm/aaaa', 'class': 'form-control'}
+        ),
         required=True
     )
 
@@ -429,7 +437,6 @@ class UpdatePacienteForm(forms.ModelForm):
 
 
 class GenerateProducaoForm(forms.Form):
-
     terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -452,7 +459,7 @@ class GenerateProducaoForm(forms.Form):
         data_inicial = self.cleaned_data.get('data_inicial')
 
         if data_inicial is None or not is_date_not_future(data_inicial):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data Inicial Inválida!')
 
     def _raise_if_data_final_is_invalid(self):
         data_final = self.cleaned_data.get('data_final')
@@ -461,7 +468,7 @@ class GenerateProducaoForm(forms.Form):
             data_final = date.today()
 
         if not is_date_not_future(data_final):
-            raise forms.ValidationError('Data Inválida!')
+            raise forms.ValidationError('Data Final Inválida!')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -472,7 +479,6 @@ class GenerateProducaoForm(forms.Form):
 
 
 class HistoricoAcademicoForm(forms.ModelForm):
-
     curso = forms.CharField(validators=[validate_letters])
 
     instituicao = forms.CharField(validators=[validate_letters])
@@ -496,5 +502,61 @@ class HistoricoAcademicoForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_conclusao_over_100_years()
+
+        return cleaned_data
+
+
+class TerapeutaMediaUploadForm(forms.ModelForm):
+
+    pdf_file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': False,
+                                                                      'accept': 'application/pdf'}),
+                               validators=[FileExtensionValidator(['pdf'])])
+
+    image_files = forms.ImageField()
+
+    description = forms.CharField(max_length=255)
+
+    class Meta:
+        model = ProfissionaisMedia
+        fields = ('pdf_file', 'image_file', 'description')
+
+    def _raise_if_no_files_upload(self):
+        text_file = self.cleaned_data.get('pdf_file')
+        image_file = self.cleaned_data.get('image_file')
+
+        if not media_form_ensure_file(text_file, image_file):
+            raise forms.ValidationError('Nenhum arquivo selecionado!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_no_files_upload()
+
+        return cleaned_data
+
+
+class PacienteMediaUploadForm(forms.ModelForm):
+
+    pdf_file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': False,
+                                                                      'accept': 'application/pdf'}),
+                               validators=[FileExtensionValidator(['pdf'])])
+
+    image_files = forms.ImageField()
+
+    description = forms.CharField(max_length=255)
+
+    class Meta:
+        model = PacientesMedia
+        fields = ('pdf_file', 'image_file', 'description')
+
+    def _raise_if_no_files_upload(self):
+        text_file = self.cleaned_data.get('pdf_file')
+        image_file = self.cleaned_data.get('image_file')
+
+        if not media_form_ensure_file(text_file, image_file):
+            raise forms.ValidationError('Nenhum arquivo selecionado!')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_no_files_upload()
 
         return cleaned_data

@@ -4,7 +4,7 @@ from django.http import HttpRequest
 from datetime import date
 from typing import Union
 from main.services.terapeutas_services import get_current_user_terapeuta
-from main.utils import get_selected_items, calculate_age
+from main.utils import get_selected_items
 from main.models import (CadastroGrupos, CadastroPacientes, ProntuariosIndividuais, ProntuariosGrupos, PresencasGrupo,
                          CadastroProfissionais)
 
@@ -230,29 +230,6 @@ def is_data_nova_consulta_group_valid(prontuario_grupo_numero: str, data_nova_en
     return is_valid
 
 
-def is_paciente_menor_acompanhado(nascimento: date, responsavel_legal: Union[str, None]) -> bool:
-    """ Validação para garantir que menores de idade
-    estejam acompanhados por um responsável legal
-    """
-    idade_paciente = calculate_age(nascimento)
-
-    if idade_paciente < 18 and not responsavel_legal:
-        return False
-    else:
-        return True
-
-
-def cpf_responsavel_required_when_responsavel(responsavel_legal: Union[str, None],
-                                              cpf_responsavel_legal: Union[str, None]) -> bool:
-    """ Validação para garantir que quando há responsável legal
-    o campo CPF do responsável também esteja preenchido
-    """
-    if responsavel_legal and not cpf_responsavel_legal:
-        return False
-    else:
-        return True
-
-
 def get_ultima_entrada_prontuarios_paciente_individual(numero: str) -> Union[date, None]:
     """Obtem a data da ultima entrada no prontuario de um paciente individual,
     caso exista, através do numero de prontuario
@@ -265,22 +242,6 @@ def get_ultima_entrada_prontuarios_paciente_individual(numero: str) -> Union[dat
     ultima_entrada_data = ultima_entrada.data_consulta if ultima_entrada else None
 
     return ultima_entrada_data
-
-
-# paciente_service.py
-def is_data_nova_consulta_individual_valid(numero: str, data_nova_consulta: date) -> bool:
-    """ Validação para garantir que a data de uma nova entrada em prontuário
-    de Pacientes individuais não é anterior a data da última consulta registrada
-    """
-
-    ultima_entrada_data = get_ultima_entrada_prontuarios_paciente_individual(numero)
-
-    if ultima_entrada_data is None:
-        return True
-
-    is_valid = ultima_entrada_data and data_nova_consulta > ultima_entrada_data
-
-    return is_valid
 
 
 def save_desligamento_paciente_individual(current_pac: CadastroPacientes) -> bool:
@@ -299,7 +260,8 @@ def save_desligamento_paciente_individual(current_pac: CadastroPacientes) -> boo
 
 
 def desligamento_paciente_registro_prontuario_individual(current_user_terapeuta: CadastroProfissionais,
-                                                         current_pac: CadastroPacientes, desligamento_form) -> bool:
+                                                         current_pac: CadastroPacientes,
+                                                         desligamento_form: 'PacienteDesligamentoForm') -> bool:
     """ Cria um registro do desligamento no Prontuario de um paciente indiviual
     """
     entrada_text = desligamento_form.cleaned_data.get('entrada_text')
@@ -328,7 +290,7 @@ def get_pacientes_in_group(prontuario_grupo_numero: str) -> QuerySet:
     return pacientes_grupo
 
 
-def save_desligamento_group(current_grp: CadastroGrupos, desligamento_form) -> bool:
+def save_desligamento_group(current_grp: CadastroGrupos, desligamento_form: 'GrupoDesligamentoForm') -> bool:
     """ Desliga um determinado grupo
     """
     data_final = desligamento_form.cleaned_data.get('data_final')
@@ -344,7 +306,8 @@ def save_desligamento_group(current_grp: CadastroGrupos, desligamento_form) -> b
     # se necessario : return current_grp
 
 
-def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: CadastroGrupos, desligamento_form,
+def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: CadastroGrupos,
+                                 desligamento_form: 'GrupoDesligamentoForm',
                                  current_user_terapeuta: CadastroProfissionais) -> bool:
     """Cria um registro de desligamento do grupo no Prontuário individuaol
     dos participantes
@@ -369,7 +332,8 @@ def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: Cadastr
         return False
 
 
-def transfer_paciente_individual(current_paciente: CadastroPacientes, transfer_form) -> CadastroPacientes:
+def transfer_paciente_individual(current_paciente: CadastroPacientes,
+                                 transfer_form: 'PacienteTransferenciaForm') -> CadastroPacientes:
     """Transfere o paciente para um novo terapeuta
     """
     paciente = current_paciente
@@ -380,7 +344,8 @@ def transfer_paciente_individual(current_paciente: CadastroPacientes, transfer_f
     return paciente
 
 
-def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes, transfer_form,
+def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes,
+                                               transfer_form: 'PacienteTransferenciaForm',
                                                current_user_terapeuta: CadastroProfissionais) -> bool:
     """ Cria uma registro de transferencia no prontuario de pacientes individuais
     """
@@ -393,8 +358,8 @@ def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes, t
                                               autor=current_user_terapeuta,
                                               data_consulta=data_transfer,
                                               entrada=f"Paciente {current_pac.nome} foi transferido por "
-                                           f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
-                                           f"\n Motivo: {entrada_text}", )
+                                              f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
+                                              f"\n Motivo: {entrada_text}", )
         return True
 
     except Exception as e:
@@ -402,7 +367,7 @@ def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes, t
         return False
 
 
-def religamento_pacientes(current_pac: CadastroPacientes, relig_form) -> bool:
+def religamento_pacientes(current_pac: CadastroPacientes, relig_form: 'ReligarPacienteForm') -> bool:
     """ Reativa um paciente que retornou para atendimento
     """
 
@@ -419,7 +384,7 @@ def religamento_pacientes(current_pac: CadastroPacientes, relig_form) -> bool:
         return False
 
 
-def registro_prontuario_religamento_paciente(current_pac: CadastroPacientes, relig_form) -> bool:
+def registro_prontuario_religamento_paciente(current_pac: CadastroPacientes, relig_form: 'ReligarPacienteForm') -> bool:
     """Cria um registro no prontuario de um paciente que está retomando o tratamento
     """
 
@@ -430,8 +395,7 @@ def registro_prontuario_religamento_paciente(current_pac: CadastroPacientes, rel
                                               autor=novo_terapeuta,
                                               data_consulta=data_religamento,
                                               entrada=f"Paciente {current_pac.nome} reiniciou o processo no dia"
-                                              f"{data_religamento} com  {novo_terapeuta}."
-                                              )
+                                              f"{data_religamento} com  {novo_terapeuta}.")
 
         return True
 
@@ -499,8 +463,10 @@ def save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry: Prontu
         return False
 
 
-def save_and_register_grupo_transfer(transfer_form, current_user_terapeuta: CadastroProfissionais,
+def save_and_register_grupo_transfer(transfer_form: 'GrupoTrasferenciaForm',
+                                     current_user_terapeuta: CadastroProfissionais,
                                      current_grupo: CadastroGrupos) -> bool:
+
     """Transfere o grupo de um terapeuta para outro e
     registra essa mudança no prontuario do Grupo"""
 
@@ -527,7 +493,7 @@ def save_and_register_grupo_transfer(transfer_form, current_user_terapeuta: Cada
         return False
 
 
-def registro_prontuario_individual_transfer_grupo(transfer_form, current_grupo: CadastroGrupos,
+def registro_prontuario_individual_transfer_grupo(transfer_form: 'GrupoTrasferenciaForm', current_grupo: CadastroGrupos,
                                                   current_user_terapeuta: CadastroProfissionais) -> bool:
     """Registra a mudança de terapeuta responsavel pelo grupo
      no prontuario individual dos membros do grupo"""
@@ -556,3 +522,5 @@ def registro_prontuario_individual_transfer_grupo(transfer_form, current_grupo: 
     except Exception as e:
         print("Erro ao executar registro_prontuario_individual_transfer_grupo", str(e))
         return False  # se necessario: return pacientes_grupo
+
+
