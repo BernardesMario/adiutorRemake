@@ -1,22 +1,17 @@
-from datetime import date
-from typing import Callable
-
 from django.contrib.auth import login as user_login
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import Group
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from verify_email.email_handler import send_verification_email
 
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuarioForm, CadastrarConveniosForm,
-                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm, UpdatePacienteForm,
+                    CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
                     CadastroGrupoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm, GenerateProducaoForm,
                     HistoricoAcademicoForm, TerapeutaMediaUploadForm, PacienteMediaUploadForm)
-from .models import (CadastroPacientes, ProntuariosIndividuais, CadastroGrupos,
-                     ProntuariosGrupos, PresencasGrupo, CadastroProfissionais)
+from .models import CadastroProfissionais
 from .services.file_service import render_to_pdf
 from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta, filter_active_pacientes_by_terapeuta,
                                           filter_active_groups_by_terapeuta, filter_inactive_groups_by_terapeuta,
@@ -561,27 +556,13 @@ def index_perfil(request: HttpRequest):
     return render(request, 'list_perfils.html', context)
 
 
-# ALTERAR PARA USER-ADMINs
 @login_required(login_url="/main/login")
-def informacoes_terapeuta(request: HttpRequest, id):
-    current_user_id = request.user.id
-    perfil_form = CadastroProfissionaisForm
-    sucesso = False
+def informacoes_terapeuta(request: HttpRequest, terapeuta_codigo: str):
 
-    if request.method == 'POST':
-        perfil_form = CadastroProfissionaisForm(request.POST)
-
-        if perfil_form.is_valid():
-            sucesso = True
-            new_terapeuta = perfil_form.save(commit=False)
-
-            # Garante que o usuário atual faça modificações em seu próprio cadastro
-            new_terapeuta.usuario_codigo_id = current_user_id
-            new_terapeuta.save()
+    current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
 
     context = {
-        'form': perfil_form,
-        'sucesso': sucesso,
+        'terapeuta': current_terapeuta,
     }
     return render(request, 'user_perfil.html', context)
 
@@ -679,7 +660,7 @@ def detalhes_paciente(request: HttpRequest, prontuario_numero: str):
 @login_required(login_url="/main/login")
 def detalhes_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     current_grupo = get_current_group(prontuario_grupo_numero)
-    current_grupo_sessoes = get_current_group_prontuario(prontuario_grupo_numero)
+    current_grupo_sessoes = [get_current_group_prontuario(prontuario_grupo_numero)]
     current_grupo_membros = get_pacientes_in_group(prontuario_grupo_numero)
     sessoes_count = len(current_grupo_sessoes)
 
@@ -691,11 +672,6 @@ def detalhes_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     }
 
     return render(request, 'grupo_detalhes.html', context)
-
-
-@login_required(login_url="/main/login")
-def list_consultas(request):
-    pass
 
 
 def redirect_page(request):
@@ -841,20 +817,23 @@ def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
     return render(request, 'historico_academico.html', context)
 
 
-def modificar_cadastro_profissionais(request: HttpRequest, terapeuta_codigo: str):
+def modificar_cadastro_profissionais(request, terapeuta_codigo: str):
     pass
 
 
-def render_terapeuta_media_form(request, terapeuta_media_form=None):
+def render_terapeuta_media_form(request, terapeuta_codigo: str, terapeuta_media_form=None):
+
+    current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
+
     if not terapeuta_media_form:
         terapeuta_media_form = TerapeutaMediaUploadForm()
 
     context = {
-        'form': terapeuta_media_form
+        'form': terapeuta_media_form,
+        'terapeuta': current_terapeuta
     }
-    # TODO Create HTML and url
 
-    return render(request, 'HTML-PLACEHOLDER', context)
+    return render(request, 'upload_terapeuta_media.html', context)
 
 
 def terapeuta_media_upload(request, terapeuta_codigo: str):
@@ -871,7 +850,7 @@ def terapeuta_media_upload(request, terapeuta_codigo: str):
     if not terapeuta_media_form.is_valid():
         print(terapeuta_media_form.errors)
 
-        return render_terapeuta_media_form(request, terapeuta_media_form)
+        return render_terapeuta_media_form(request, terapeuta_codigo, terapeuta_media_form)
 
     terapeuta_media = terapeuta_media_form.save(commit=False)
     terapeuta_media.terapeuta = current_terapeuta
@@ -883,33 +862,37 @@ def terapeuta_media_upload(request, terapeuta_codigo: str):
         'form': terapeuta_media_form,
         'terapeuta': current_terapeuta
     }
-    # TODO Create HTML and url
 
-    return render(request, 'PLACEHOLDER.html', context)
+    return render(request, 'upload_terapeuta_media.html', context)
 
 
-def render_paciente_media_form(request, paciente_media_form=None):
+def render_paciente_media_form(request, prontuario_numero: str, paciente_media_form=None):
+
+    current_paciente = get_current_paciente(prontuario_numero)
+
     if not paciente_media_form:
         paciente_media_form = PacienteMediaUploadForm
 
     context = {
         'form': paciente_media_form,
+        'paciente': current_paciente
     }
-    # TODO Create HTML and url
 
-    return render(request, 'PLACEHOLDER.html', context)
+    return render(request, 'paciente_upload_media.html', context)
 
 
 def paciente_media_upload(request, prontuario_numero: str):
+    """View para upload de arquivos relacionados a Pacientes
+    """
     if request.method != 'POST':
-        return render_paciente_media_form(request)
+        return render_paciente_media_form(request, prontuario_numero)
 
     paciente_media_form = PacienteMediaUploadForm(request.POST, request.FILES)
 
     if not paciente_media_form.is_valid():
         print(paciente_media_form.errors)
 
-        return render_terapeuta_media_form(request, paciente_media_form)
+        return render_terapeuta_media_form(request, prontuario_numero, paciente_media_form)
 
     current_paciente = get_current_paciente(prontuario_numero)
 
@@ -923,5 +906,5 @@ def paciente_media_upload(request, prontuario_numero: str):
         'form': paciente_media_form,
         'paciente': current_paciente
     }
-    # TODO Create HTML and url
-    return render(request, 'PLACEHOLDER.html', context)
+
+    return render(request, 'paciente_upload_media.html', context)

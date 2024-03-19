@@ -136,6 +136,17 @@ STATICFILES_DIRS = [
 
 ]
 
+# FILE_UPLOAD_HANDLERS = [
+#     'django.core.files.uploadhandler.MemoryFileUploadHandler',
+#     'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+#     'django.core.files.uploadhandler.TemporaryUploadedFile',
+#
+# ]
+
+# DEFAULT_FILE_STORAGE = [
+#     'django.core.files.storageFileSystemStorage'
+# ]
+
 # Email config for email verification/2SA
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'

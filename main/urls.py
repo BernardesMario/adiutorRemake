@@ -1,11 +1,12 @@
-from django.urls import path, include
+from django.urls import path
 from django.contrib.auth.decorators import permission_required
 from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
                     add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, religar_paciente,
-                    modificar_cadastro_profissionais, producao_mensal, handle_error, cadastro_historico_academico)
+                    modificar_cadastro_profissionais, producao_mensal, handle_error, cadastro_historico_academico,
+                    terapeuta_media_upload, paciente_media_upload)
 
 app_name = 'main'
 
@@ -38,7 +39,7 @@ urlpatterns = [
     path('convenio/',
          permission_required('main.add_convenio')(novo_convenio),
          name='convenio'),
-    path('perfil/', informacoes_terapeuta, name='perfil'),
+    path('perfil/<str:terapeuta_codigo>', informacoes_terapeuta, name='perfil'),
     path('dadospac/<str:prontuario_numero>/',
          detalhes_paciente, name='dadospac'
          ),
@@ -81,4 +82,8 @@ urlpatterns = [
          # permission_required(CREATE-PERMISSION)(),
          modificar_cadastro_profissionais, name='modificar-terapeuta'),
     path('producao/gerar/', producao_mensal, name='gerar-producao'),
+    path('enviar_arquivo_terapeuta/<str:terapeuta_codigo>/',
+         terapeuta_media_upload, name='enviar_arquivo_terapeuta'),
+    path('enviar_arquivo_paciente/<str:prontuario_numero>',
+         paciente_media_upload, name='enviar_arquivo_paciente')
 ]

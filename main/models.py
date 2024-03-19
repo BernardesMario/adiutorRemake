@@ -3,7 +3,7 @@ import re
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator, MaxLengthValidator
+from django.core.validators import MinLengthValidator
 from accounts.models import CustomUser
 from datetime import date, datetime
 
@@ -23,7 +23,8 @@ def create_prontuario_numero():
 
     novo_prontuario_numero_identificador_str = str(novo_prontuario_numero_identificador)
 
-    novo_prontuario_numero_identificador_str = '0' * (5 - len(novo_prontuario_numero_identificador_str)) + novo_prontuario_numero_identificador_str
+    novo_prontuario_numero_identificador_str = '0' * (
+                5 - len(novo_prontuario_numero_identificador_str)) + novo_prontuario_numero_identificador_str
 
     ano_str = str(datetime.now().year)
 
@@ -56,7 +57,8 @@ def validate_date_past(value):
 class CadastroPacientes(models.Model):
     nome = models.CharField(verbose_name='Nome do Paciente', max_length=100,
                             validators=[validate_letters, MinLengthValidator(limit_value=5)])
-    prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7, default=create_prontuario_numero,
+    prontuario_numero = models.CharField(verbose_name='Nº de Prontuario', max_length=7,
+                                         default=create_prontuario_numero,
                                          unique=True, validators=[validate_numbers, MinLengthValidator(limit_value=7)])
     nascimento = models.DateField(verbose_name='Data de Nascimento', help_text='dd/mm/aaaa',
                                   validators=[validate_date_past])
@@ -152,7 +154,7 @@ class ConveniosAceitos(models.Model):
                                            validators=[validate_letters, MinLengthValidator(limit_value=3)])
     telefone_numero = models.CharField(verbose_name='Telefone', max_length=11, blank=False, null=True,
                                        validators=[validate_numbers, MinLengthValidator(limit_value=11)])
-    email = models.EmailField(verbose_name='E-mail para Contato', blank=False, null=True,)
+    email = models.EmailField(verbose_name='E-mail para Contato', blank=False, null=True, )
     observacoes = models.TextField(verbose_name='Observações', blank=True, null=True)
     objects = models.Manager()
 
@@ -341,23 +343,21 @@ def terapeutas_media_upload_path(instance, filename):
     terapeuta_number = instance.terapeuta.conselho_codigo
 
     upload_path = os.path.join('media', terapeuta_number, filename)
-    # upload_path = "terapeuta_{0}/{1}".format(terapeuta_number, filename)
 
     return upload_path
 
 
 class HistoricoAcademico(models.Model):
-
     terapeuta = models.ForeignKey('CadastroProfissionais',
-                                    on_delete=models.PROTECT,
-                                    verbose_name='Terapeuta')
+                                  on_delete=models.PROTECT,
+                                  verbose_name='Terapeuta')
     curso = models.CharField(verbose_name='Curso', max_length=30, validators=[validate_letters])
 
     instituicao = models.CharField(verbose_name='Instituição', max_length=50,
                                    validators=[validate_letters, MinLengthValidator(limit_value=4)])
 
     ano_conclusao = models.CharField(verbose_name='Ano de Conclusão', null=False, max_length=4,
-                                     validators=[validate_numbers,MinLengthValidator(limit_value=4)])
+                                     validators=[validate_numbers, MinLengthValidator(limit_value=4)])
 
     certificado_conclusao = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=False,
                                              verbose_name='Certificado de Conclusão', help_text='Apenas arquivos PDF')
@@ -377,24 +377,22 @@ def pacientes_media_upload_path(instance, filename):
     baseado no numero de prontuario do paciente associado à midia
     """
 
-    paciente_number = instance.paciente.prontuario
+    paciente_number = instance.paciente.prontuario_numero
 
     upload_path = os.path.join('media', paciente_number, filename)
-    # upload_path = "paciente_{0}/{1}".format(paciente_number, filename)
 
     return upload_path
 
 
 class PacientesMedia(models.Model):
-
     paciente = models.ForeignKey('CadastroPacientes', on_delete=models.CASCADE, related_name='arquivos',
                                  verbose_name='Paciente', help_text='Paciente relacionado')
 
     pdf_file = models.FileField(upload_to=pacientes_media_upload_path, blank=True, null=True, verbose_name='PDF',
                                 help_text='Arquivos PDF')
 
-    image_files = models.ImageField(upload_to=pacientes_media_upload_path, blank=True, null=True,
-                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
+    image_file = models.ImageField(upload_to=pacientes_media_upload_path, blank=True, null=True,
+                                   verbose_name='Imagens', help_text='Arquivos de Imagem')
 
     description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')
 
@@ -409,15 +407,14 @@ class PacientesMedia(models.Model):
 
 
 class ProfissionaisMedia(models.Model):
-
     terapeuta = models.ForeignKey('CadastroProfissionais', on_delete=models.CASCADE, related_name='arquivos',
                                   verbose_name='Terapeuta', help_text='Terapeuta relacionado')
 
     pdf_file = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=True, verbose_name='PDF',
                                 help_text='Arquivos PDF')
 
-    image_files = models.ImageField(upload_to=terapeutas_media_upload_path, blank=True, null=True,
-                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
+    image_file = models.ImageField(upload_to=terapeutas_media_upload_path, blank=True, null=True,
+                                   verbose_name='Imagens', help_text='Arquivos de Imagem')
 
     description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')
 

@@ -1,18 +1,17 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
-from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator
 from datetime import date
 import re
-from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes, PresencasGrupo,
+from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, ProntuariosIndividuais, ProntuariosGrupos, validate_numbers, validate_letters,
                      HistoricoAcademico, ProfissionaisMedia, PacientesMedia)
 from accounts.models import CustomUser
 from .services.pacientes_services import (is_data_nova_consulta_group_valid)
 from .services.pacientes_forms_services import is_paciente_menor_acompanhado, cpf_responsavel_required_when_responsavel, \
     is_data_nova_consulta_individual_valid, ensure_paciente_convenio_carteirinha
-from .utils import is_date_not_future, certificado_year_validator, calculate_age, validate_image_file_extension, \
+from .utils import is_date_not_future, certificado_year_validator, calculate_age, is_image_file_extension_valid, \
     media_form_ensure_file
 
 
@@ -437,6 +436,7 @@ class UpdatePacienteForm(forms.ModelForm):
 
 
 class GenerateProducaoForm(forms.Form):
+
     terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -479,15 +479,17 @@ class GenerateProducaoForm(forms.Form):
 
 
 class HistoricoAcademicoForm(forms.ModelForm):
-    curso = forms.CharField(validators=[validate_letters])
 
-    instituicao = forms.CharField(validators=[validate_letters])
+    curso = forms.CharField(label='Curso', validators=[validate_letters])
 
-    certificado_conclusao = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': False,
-                                                                                   'accept': 'application/pdf'}),
-                                            validators=[FileExtensionValidator(['pdf'])])
+    instituicao = forms.CharField(label='Instituição', validators=[validate_letters])
 
-    ano_conclusao = forms.IntegerField(validators=[validate_numbers])
+    certificado_conclusao = forms.FileField(label='Certificado', validators=[FileExtensionValidator(['pdf'])],
+                                            widget=forms.ClearableFileInput(attrs={'multiple': False,
+                                                                                   'accept': 'application/pdf'})
+                                            )
+    # TODO validação ano não esta no futuro
+    ano_conclusao = forms.IntegerField(label='Ano de Conclusão', validators=[validate_numbers])
 
     class Meta:
         model = HistoricoAcademico
@@ -508,13 +510,13 @@ class HistoricoAcademicoForm(forms.ModelForm):
 
 class TerapeutaMediaUploadForm(forms.ModelForm):
 
-    pdf_file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': False,
-                                                                      'accept': 'application/pdf'}),
-                               validators=[FileExtensionValidator(['pdf'])])
+    pdf_file = forms.FileField(label='PDF', widget=forms.ClearableFileInput(attrs={'multiple': False,
+                                                                                   'accept': 'application/pdf'}),
+                               validators=[FileExtensionValidator(['pdf'])], required=False)
 
-    image_files = forms.ImageField()
+    image_file = forms.ImageField(label='Imagens', widget=forms.ClearableFileInput({'multiple': False}), required=False)
 
-    description = forms.CharField(max_length=255)
+    description = forms.CharField(label='Descrição', max_length=255)
 
     class Meta:
         model = ProfissionaisMedia
@@ -527,22 +529,29 @@ class TerapeutaMediaUploadForm(forms.ModelForm):
         if not media_form_ensure_file(text_file, image_file):
             raise forms.ValidationError('Nenhum arquivo selecionado!')
 
+    def _raise_if_image_file_not_supported(self):
+        image_file = self.cleaned_data.get('image_file')
+
+        if image_file and not is_image_file_extension_valid(image_file):
+            raise forms.ValidationError('Arquivo de imagem não suportado!')
+
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_no_files_upload()
+        self._raise_if_image_file_not_supported()
 
         return cleaned_data
 
 
 class PacienteMediaUploadForm(forms.ModelForm):
 
-    pdf_file = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': False,
-                                                                      'accept': 'application/pdf'}),
-                               validators=[FileExtensionValidator(['pdf'])])
+    pdf_file = forms.FileField(label='PDF', widget=forms.ClearableFileInput(attrs={'multiple': False,
+                                                                                   'accept': 'application/pdf'}),
+                               validators=[FileExtensionValidator(['pdf'])], required=False)
 
-    image_files = forms.ImageField()
+    image_file = forms.ImageField(label='Imagens', widget=forms.ClearableFileInput({'multiple': False}), required=False)
 
-    description = forms.CharField(max_length=255)
+    description = forms.CharField(label='Descrição', max_length=255)
 
     class Meta:
         model = PacientesMedia
@@ -555,8 +564,15 @@ class PacienteMediaUploadForm(forms.ModelForm):
         if not media_form_ensure_file(text_file, image_file):
             raise forms.ValidationError('Nenhum arquivo selecionado!')
 
+    def _raise_if_image_file_not_supported(self):
+        image_file = self.cleaned_data.get('image_file')
+
+        if image_file and not is_image_file_extension_valid(image_file):
+            raise forms.ValidationError('Arquivo de imagem não suportado!')
+
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_no_files_upload()
+        self._raise_if_image_file_not_supported()
 
         return cleaned_data

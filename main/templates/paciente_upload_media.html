@@ -1,0 +1,41 @@
+{% extends 'middleman1.html' %}
+{% load bootstrap5 %}
+{% load static%}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <title>{% block title %} Arquivos de Paciente {% endblock %}</title>
+</head>
+<body>
+    <div class="page-container">
+
+        {% block content %}
+            <h1 class="text-body-emphasis">
+                Arquivos de {{ paciente.nome }} / Prontuário {{ paciente.prontuario_numero }}
+            </h1>
+
+            {% if sucesso %}
+                <p class="alert alert-success">
+                    Adicionado com Sucesso! <br>
+                    <a href="{% url 'main:administrativo' %}"> Voltar ao Inicio </a>
+                </p>
+            {% else %}
+
+            <form action="" method="POST" enctype="multipart/form-data" id="form" novalidate>
+                {% csrf_token %}
+                {% bootstrap_form form %}
+                <button type="submit" class="btn btn-primary btn-block">
+                    Salvar
+                </button>
+
+            </form>
+            {% endif %}
+        {% endblock %}
+    </div>
+</body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
+</html>

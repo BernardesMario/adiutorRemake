@@ -5,21 +5,27 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <title>{% block title %} Informações Pessoais de {} {% endblock %}</title>
+    <title>{% block title %} Informações Pessoais de {{ terapeuta.nome}} {% endblock %}</title>
 </head>
 <body>
 <div class="page-container">
 
 {% block content %}
-<h1>Suas informações:</h1>
-    {% if sucesso %}
-    <p>Informações atualizadas com sucesso!</p>
-    {% endif %}
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Salvar</button>
-    </form>
+<h1>Informações Pessoais de {{ terapeuta.nome }}:</h1>
+    <li>
+        <strong> Pessoal </strong>: <br>
+        Data de Nascimento: {{ terapeuta.nascimento}} <br>
+        CPF:{{ terapeuta.cpf_numero }} , RG: {{terapeuta.rg_numero}} {{terapeuta.rg_emissor}} <br>
+        Contato: {{ terapeuta.email }} <br> /
+        {{ terapeuta.telefone_numero }} <br>
+        Endereço: Rua: {{ terapeuta.endereco_rua }}, {{ terapeuta.endereco_numero }} <br>
+        {{terapeuta.endereco_complemento}} , {{ terapeuta.endereco_bairro }}, {{ terapeuta.cidade }} <br>
+        CEP: {{ terapeuta.cep_numero }} <br>
+        <strong> Profissional: </strong><br>
+        CRP: {{ terapeuta.conselho_codigo }} <br>
+        Status Pós: {{ terapeuta.pos_grad_status }} <br>
+
+    </li>
 {% endblock %}
 </div>
 </body>

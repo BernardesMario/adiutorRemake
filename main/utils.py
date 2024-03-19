@@ -26,7 +26,8 @@ def calculate_age(data_nascimento: date) -> int:
 
 
 def is_date_not_future(data_field: date) -> bool:
-    """ Validação de campos de data
+    """ Validação de campos de data para assegurar
+    que data não está no futuro
     """
 
     hoje = date.today()
@@ -49,14 +50,15 @@ def certificado_year_validator(input_year: int) -> bool:
 
 def media_form_ensure_file(text_file: File, image_file: ImageFile) -> bool:
 
-    if not text_file or not image_file:
+    if not text_file and not image_file:
         return False
 
     return True
 
 
-def validate_image_file_extension(value):
-    if value.name.split('.')[-1] not in ['jpg', 'jpeg', 'png', 'gif']:
+def is_image_file_extension_valid(file: ImageFile) -> bool:
+
+    if file.name.split('.')[-1] not in ['jpg', 'jpeg', 'png', 'gif']:
         return False
 
     return True
