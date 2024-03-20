@@ -488,7 +488,6 @@ class HistoricoAcademicoForm(forms.ModelForm):
                                             widget=forms.ClearableFileInput(attrs={'multiple': False,
                                                                                    'accept': 'application/pdf'})
                                             )
-    # TODO validação ano não esta no futuro
     ano_conclusao = forms.IntegerField(label='Ano de Conclusão', validators=[validate_numbers])
 
     class Meta:
@@ -501,9 +500,17 @@ class HistoricoAcademicoForm(forms.ModelForm):
         if not certificado_year_validator(ano_conclusao):
             raise forms.ValidationError('Ano de Conclusão Inválido!')
 
+    def _raise_if_concluso_in_future(self):
+        ano_conclusao = self.cleaned_data.get('ano_conclusao')
+        ano_atual = int(date.today().year)
+
+        if ano_conclusao > ano_atual:
+            raise forms.ValidationError('Ano de Conclusão não pode estar no futuro!')
+
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_conclusao_over_100_years()
+        self._raise_if_concluso_in_future()
 
         return cleaned_data
 

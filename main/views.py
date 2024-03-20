@@ -2,7 +2,7 @@ from django.contrib.auth import login as user_login
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponse, HttpRequest
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from verify_email.email_handler import send_verification_email
 
@@ -11,25 +11,30 @@ from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaPron
                     CadastroGrupoForm, EntradaProntuarioGrupoForm, ReligarPacienteForm,
                     AdicionarPacGrupoForm, GrupoTrasferenciaForm, GrupoDesligamentoForm, GenerateProducaoForm,
                     HistoricoAcademicoForm, TerapeutaMediaUploadForm, PacienteMediaUploadForm)
-from .models import CadastroProfissionais
+
+from .models import CadastroProfissionais, HistoricoAcademico, ProfissionaisMedia, PacientesMedia
 from .services.file_service import render_to_pdf
+
 from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta, filter_active_pacientes_by_terapeuta,
                                           filter_active_groups_by_terapeuta, filter_inactive_groups_by_terapeuta,
                                           get_current_paciente, get_current_grupo_prontuario_numero,
                                           get_current_paciente_prontuario, when_add_pacientes_to_group_get_info_and_act,
                                           get_current_group, get_pacientes_sem_grupo, filter_active_pacientes,
-                                          get_current_group_prontuario, get_pacientes_in_group,
-                                          get_selected_pacientes, register_presencas_consulta_grupo,
+                                          get_current_group_prontuario, get_pacientes_in_group, get_selected_pacientes,
+                                          register_presencas_consulta_grupo, registro_prontuario_religamento_paciente,
                                           save_new_entrada_prontuario_grupo_in_individual_prontuario,
-                                          desligamento_paciente_registro_prontuario_individual,
-                                          save_desligamento_paciente_individual, save_desligamento_group,
+                                          desligamento_paciente_registro_prontuario_individual, save_desligamento_group,
+                                          save_desligamento_paciente_individual, get_current_pacient_pdf_media,
                                           registro_desligamento_grupos, transfer_paciente_individual,
                                           registro_prontuario_transferencia_paciente, save_and_register_grupo_transfer,
                                           registro_prontuario_individual_transfer_grupo, religamento_pacientes,
-                                          registro_prontuario_religamento_paciente, filter_inactive_pacientes)
+                                          filter_inactive_pacientes, get_current_pacient_image_media)
 
-from .services.terapeutas_services import get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta, \
-    associate_new_user_to_cadastro_profissional, producao_generator, producao_detalhamento, get_terapeuta_by_codigo
+from .services.terapeutas_services import (get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta,
+                                           associate_new_user_to_cadastro_profissional, get_terapeuta_by_codigo,
+                                           producao_detalhamento, producao_generator, get_terapeuta_historico_academico,
+                                           get_current_terapeuta_image_media, get_current_terapeuta_pdf_media
+                                           )
 from .services.users_service import redirect_logged_user_to_home
 from .utils import get_selected_items, calculate_age
 
@@ -68,7 +73,6 @@ def cadastrar_paciente(request: HttpRequest):
 
 
 def render_cadastro_grupo_form(request: HttpRequest, grupo_form=None):
-
     current_user_terapeuta = get_current_user_terapeuta(request)
 
     if not grupo_form:
@@ -253,9 +257,10 @@ def add_entrada(request: HttpRequest, prontuario_numero: str):
 
 
 def render_add_entrada_prontuario_grupo(request: HttpRequest, prontuario_grupo_numero: str, entrada_form=None):
-    pacientes_grupo = get_pacientes_in_group(prontuario_grupo_numero)
-    if not entrada_form:
 
+    pacientes_grupo = get_pacientes_in_group(prontuario_grupo_numero)
+
+    if not entrada_form:
         entrada_form = EntradaProntuarioGrupoForm(initial={'numero': prontuario_grupo_numero})
 
     context = {'form': entrada_form,
@@ -292,7 +297,9 @@ def add_entrada_sessao_grupo(request: HttpRequest, prontuario_grupo_numero: str)
     pacs_presentes = get_selected_pacientes(selected_items)
 
     register_presencas_success = register_presencas_consulta_grupo(new_entry, pacs_presentes, prontuario_grupo_numero)
-    register_prontuarios_individuais_success = save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry, current_user_terapeuta, pacs_presentes)
+    register_prontuarios_individuais_success = save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry,
+                                                                                                          current_user_terapeuta,
+                                                                                                          pacs_presentes)
 
     if register_prontuarios_individuais_success and register_presencas_success:
         sucesso = True
@@ -428,7 +435,8 @@ def transferir_paciente(request: HttpRequest, prontuario_numero: str) -> HttpRes
     current_user_terapeuta = get_current_user_terapeuta(request)
 
     transferencia_sucess = transfer_paciente_individual(current_paciente, transfer_form)
-    registro_transferencia_sucess = registro_prontuario_transferencia_paciente(current_paciente, transfer_form, current_user_terapeuta)
+    registro_transferencia_sucess = registro_prontuario_transferencia_paciente(current_paciente, transfer_form,
+                                                                               current_user_terapeuta)
 
     if transferencia_sucess and registro_transferencia_sucess:
         sucesso = True
@@ -560,9 +568,15 @@ def index_perfil(request: HttpRequest):
 def informacoes_terapeuta(request: HttpRequest, terapeuta_codigo: str):
 
     current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
+    historico_academico = get_terapeuta_historico_academico(current_terapeuta)
+    pdf_media = get_current_terapeuta_pdf_media(current_terapeuta)
+    image_media = get_current_terapeuta_image_media(current_terapeuta)
 
     context = {
         'terapeuta': current_terapeuta,
+        'historico': historico_academico,
+        'image_media': image_media,
+        'pdf_media': pdf_media
     }
     return render(request, 'user_perfil.html', context)
 
@@ -646,14 +660,21 @@ def novo_convenio(request: HttpRequest):
 def detalhes_paciente(request: HttpRequest, prontuario_numero: str):
     """ Exibe informações cadastradas sobre um paciente
     """
+
     current_paciente = get_current_paciente(prontuario_numero)
+
     nascimento = current_paciente.nascimento
     idade_paciente = calculate_age(nascimento)
+    paciente_pdf = get_current_pacient_pdf_media(current_paciente)
+    paciente_images = get_current_pacient_image_media(current_paciente)
 
     context = {
         'paciente': current_paciente,
-        'idade': idade_paciente
+        'idade': idade_paciente,
+        'pdf_media': paciente_pdf,
+        'image_media': paciente_images
     }
+
     return render(request, 'paciente_details.html', context)
 
 
@@ -674,8 +695,13 @@ def detalhes_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     return render(request, 'grupo_detalhes.html', context)
 
 
-def redirect_page(request):
-    pass
+@login_required(login_url="/main/login")
+def redirect_to_homepage(request):
+    current_user = request.user
+    terapeutas_group = get_terapeutas_group()
+    administrativo_group = get_administrativo_group()
+
+    return redirect_logged_user_to_home(current_user, terapeutas_group, administrativo_group)
 
 
 def render_religar_paciente_form(request, relig_form=None):
@@ -723,7 +749,6 @@ def handle_error(request):
 
 
 def render_producao_mensal_form(request, producao_form=None):
-
     current_user_terapeuta = get_current_user_terapeuta(request)
 
     if not producao_form:
@@ -767,13 +792,12 @@ def producao_mensal(request: HttpRequest):
         'producao_count': producao_count,
         'data_inicial': data_inicial,
         'data_final': data_final
-            }
+    }
 
     return render(request, 'producao_mensal.html', context)
 
 
 def render_historico_academico_form(request, terapeuta_codigo: str, historico_form=None):
-
     current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
 
     if not historico_form:
@@ -822,7 +846,6 @@ def modificar_cadastro_profissionais(request, terapeuta_codigo: str):
 
 
 def render_terapeuta_media_form(request, terapeuta_codigo: str, terapeuta_media_form=None):
-
     current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
 
     if not terapeuta_media_form:
@@ -867,7 +890,6 @@ def terapeuta_media_upload(request, terapeuta_codigo: str):
 
 
 def render_paciente_media_form(request, prontuario_numero: str, paciente_media_form=None):
-
     current_paciente = get_current_paciente(prontuario_numero)
 
     if not paciente_media_form:
@@ -908,3 +930,96 @@ def paciente_media_upload(request, prontuario_numero: str):
     }
 
     return render(request, 'paciente_upload_media.html', context)
+
+
+def view_certificado_curso(request, curso_id):
+    """ View para visualizar Certificados
+        de Histórico Acadêmico
+    """
+    pdf_file = get_object_or_404(HistoricoAcademico, pk=curso_id)
+
+    try:
+
+        with pdf_file.certificado_conclusao.open('rb') as pdf:
+            response = HttpResponse(pdf.read(), content_type='application/pdf')
+            response['Content-Disposition'] = 'inline; filename=' + pdf_file.certificado_conclusao.name
+            return response
+
+    except FileNotFoundError:
+        return HttpResponse('Arquivo não Encontrado', status=404)
+
+
+def view_terapeutas_pdf(request, media_id: int):
+    """ View para visualizar PDFs relacionados
+        a um terapeuta
+    """
+    pdf_file = get_object_or_404(ProfissionaisMedia, pk=media_id)
+
+    with pdf_file.pdf_file.open('rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename=' + pdf_file.pdf_file.name
+
+        return response
+
+
+def view_paciente_pdf(request, media_id):
+    """ View para visualização de PDFs
+        relacionados aum paciente
+    """
+    pdf_file = get_object_or_404(PacientesMedia, pk=media_id)
+
+    with pdf_file.pdf_file.open('rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename=' + pdf_file.pdf_file.name
+
+        return response
+
+
+def view_paciente_images(request, media_id: int):
+    """ View para visualização de imagens relacionadas
+        a um paciente
+    """
+
+    image_file = get_object_or_404(PacientesMedia, pk=media_id)
+
+    content_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+    }
+
+    file_extension = image_file.image_file.name.split('.')[-1]
+
+    content_type = content_types.get(file_extension.lower(), 'application/octet-stream')
+
+    with image_file.image_file.open('rb') as image:
+        response = HttpResponse(image.read(), content_type=content_type)
+        response['Content-Disposition'] = 'inline; filename=' + image_file.image_file.name
+
+        return response
+
+
+def view_terapeuta_images(request, media_id: int):
+    """ View para visualização de imagens relacionadas
+        a um terapeuta
+    """
+
+    image_file = get_object_or_404(ProfissionaisMedia, pk=media_id)
+
+    content_types = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+    }
+
+    file_extension = image_file.image_file.name.split('.')[-1]
+
+    content_type = content_types.get(file_extension.lower(), 'application/octet-stream')
+
+    with image_file.image_file.open('rb') as image:
+        response = HttpResponse(image.read(), content_type=content_type)
+        response['Content-Disposition'] = 'inline; filename=' + image_file.image_file.name
+
+        return response

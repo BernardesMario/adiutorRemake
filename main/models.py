@@ -389,9 +389,9 @@ class PacientesMedia(models.Model):
                                  verbose_name='Paciente', help_text='Paciente relacionado')
 
     pdf_file = models.FileField(upload_to=pacientes_media_upload_path, blank=True, null=True, verbose_name='PDF',
-                                help_text='Arquivos PDF')
+                                default='n/d', help_text='Arquivos PDF')
 
-    image_file = models.ImageField(upload_to=pacientes_media_upload_path, blank=True, null=True,
+    image_file = models.ImageField(upload_to=pacientes_media_upload_path, blank=True, null=True, default='n/d',
                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
 
     description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')
@@ -411,9 +411,9 @@ class ProfissionaisMedia(models.Model):
                                   verbose_name='Terapeuta', help_text='Terapeuta relacionado')
 
     pdf_file = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=True, verbose_name='PDF',
-                                help_text='Arquivos PDF')
+                                default='n/d', help_text='Arquivos PDF')
 
-    image_file = models.ImageField(upload_to=terapeutas_media_upload_path, blank=True, null=True,
+    image_file = models.ImageField(upload_to=terapeutas_media_upload_path, blank=True, null=True, default='n/d',
                                    verbose_name='Imagens', help_text='Arquivos de Imagem')
 
     description = models.CharField(max_length=255, verbose_name='Descrição', help_text='Descreva o arquivo')

@@ -6,7 +6,8 @@ from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
                     add_entrada_sessao_grupo, add_pacs_grupo, list_entradas_grupo, desligar_grupo, religar_paciente,
                     modificar_cadastro_profissionais, producao_mensal, handle_error, cadastro_historico_academico,
-                    terapeuta_media_upload, paciente_media_upload)
+                    terapeuta_media_upload, paciente_media_upload, redirect_to_homepage, view_certificado_curso,
+                    view_paciente_pdf, view_paciente_images, view_terapeuta_images, view_terapeutas_pdf)
 
 app_name = 'main'
 
@@ -85,5 +86,16 @@ urlpatterns = [
     path('enviar_arquivo_terapeuta/<str:terapeuta_codigo>/',
          terapeuta_media_upload, name='enviar_arquivo_terapeuta'),
     path('enviar_arquivo_paciente/<str:prontuario_numero>',
-         paciente_media_upload, name='enviar_arquivo_paciente')
+         paciente_media_upload, name='enviar_arquivo_paciente'),
+    path('homepage', redirect_to_homepage, name='homepage'),
+    path('view_certificado/<int:curso_id>/',
+         view_certificado_curso, name='view_certificado'),
+    path('view_paciente_files/pdf/<int:media_id>',
+         view_paciente_pdf, name='paciente/pdf'),
+    path('view_paciente_images/image/<int:media_id>',
+         view_paciente_images, name='paciente/image'),
+    path('view_terapeuta_files/image/<int:media_id>',
+         view_terapeuta_images, name='terapeuta/image'),
+    path('view_terapeuta_files/pdf/<int:media_id>',
+         view_terapeutas_pdf, name='terapeuta/pdf'),
 ]
