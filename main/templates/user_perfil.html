@@ -12,20 +12,48 @@
 
 {% block content %}
 <h1>Informações Pessoais de {{ terapeuta.nome }}:</h1>
-    <li>
-        <strong> Pessoal </strong>: <br>
-        Data de Nascimento: {{ terapeuta.nascimento}} <br>
-        CPF:{{ terapeuta.cpf_numero }} , RG: {{terapeuta.rg_numero}} {{terapeuta.rg_emissor}} <br>
-        Contato: {{ terapeuta.email }} <br> /
-        {{ terapeuta.telefone_numero }} <br>
-        Endereço: Rua: {{ terapeuta.endereco_rua }}, {{ terapeuta.endereco_numero }} <br>
-        {{terapeuta.endereco_complemento}} , {{ terapeuta.endereco_bairro }}, {{ terapeuta.cidade }} <br>
-        CEP: {{ terapeuta.cep_numero }} <br>
-        <strong> Profissional: </strong><br>
-        CRP: {{ terapeuta.conselho_codigo }} <br>
-        Status Pós: {{ terapeuta.pos_grad_status }} <br>
 
-    </li>
+    <h3> Pessoal : </h3>
+
+        <li>Data de Nascimento: {{ terapeuta.nascimento_data }}  </li>
+        <li>CPF: {{ terapeuta.cpf_numero }} , RG: {{terapeuta.rg_numero}} {{terapeuta.rg_emissor}} </li>
+        <li>Email: {{ terapeuta.email }} </li>
+        <li>Telefone: {{ terapeuta.telefone_numero }} </li>
+        <li>Endereço: Rua: {{ terapeuta.endereco_rua }}, {{ terapeuta.endereco_numero }} <br>
+            {{terapeuta.endereco_complemento}} , {{ terapeuta.endereco_bairro }}, {{ terapeuta.cidade }},
+        <br> CEP: {{ terapeuta.cep_numero }} </li>
+        <br>
+        <h4> Profissional: </h4>
+        <li>CRP: {{ terapeuta.conselho_codigo }} </li>
+        <li>Status Pós: {{ terapeuta.pos_grad_status }} </li>
+    <br>
+    <h6> Formação: </h6>
+        {% for curso in historico %}
+            <li>
+                {{ curso.curso }} - {{ curso.instituicao }} - {{ curso.ano_conclusao }} <br>
+                <a href="{% url 'main:view_certificado' curso_id=curso.id %}"> Ver Certificado </a>
+            </li>
+        {% empty %}
+            <li> Sem arquivos para exibuir .</li>
+        {% endfor %}
+    <h5> Arquivos: </h5>
+        {% for media in pdf_media %}
+            PDF:
+            <li>
+                {{ media.description }} - <a href="{% url 'main:terapeuta/pdf' media_id=media.id %}"> Visualizar </a>
+            </li>
+        {% empty %}
+            <li> Sem arquivos para exibir.</li>
+        {% endfor %}
+        <br>
+            Imagens: <br>
+            {% for media in image_media %}
+                <li>
+                    {{ media.description }} - <a href="{% url 'main:terapeuta/image' media_id=media.id %}"> Visualizar </a>
+                </li>
+            {% empty %}
+                <li> Sem arquivos para exibir.</li>
+            {% endfor %}
 {% endblock %}
 </div>
 </body>

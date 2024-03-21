@@ -4,50 +4,56 @@
 
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %} Cadastro Geral {% endblock %}</title>
+    <head>
+        <meta charset="UTF-8">
+        <title>{% block title %} Cadastro Geral {% endblock %}</title>
 
-</head>
-<body>
-<div class="page-container">
+    </head>
+    <body>
+        <div class="page-container">
 
-{% block content %}
-<h1>Bem Vindo {{ request.user.username }} ! </h1>
-    {% csrf_token %}
-    <ul>
-        <h2> Pacientes Ativos: </h2>
-        {% for paciente in lis_pacientes_ativos %}
-            <li>
-                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
-                <a href="{% url 'main:enviar_arquivo_paciente' prontuario_numero=paciente.prontuario_numero %}"> Adicionar Arquivo </a> <br>
+        {% block content %}
+        <h1>Bem Vindo {{ request.user.username }} ! </h1>
+            {% csrf_token %}
+            <ul>
+                <h2> Pacientes Ativos: </h2>
+                    {% for paciente in lis_pacientes_ativos %}
+                        <li>
+                        {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                        <a href="{% url 'main:enviar_arquivo_paciente' prontuario_numero=paciente.prontuario_numero %}"> Adicionar Arquivo </a> /
+                        <a href="{% url 'main:dadospac' prontuario_numero=paciente.prontuario_numero %}"> Ver Detalhes </a> <br>
 
-            </li>
-        {% empty %}
-            <li>No entries found.</li>
-        {% endfor %}
+                        </li>
+                    {% empty %}
+                        <li>No entries found.</li>
+                    {% endfor %}
 
-        <h2> Pacientes Inativos: </h2>
-        {% for paciente in lis_pacientes_inativos %}
-            <li>
-                {{ paciente.nome }} - {{ paciente.prontuario_numero }}
-                <a href="{% url 'main:religamento' prontuario_numero=paciente.prontuario_numero %}"> Reativar </a> <br>
-            </li>
-        {% empty %}
-            <li>No entries found.</li>
-        {% endfor %}
-    <ul>
-        <h2> Terapeutas: </h2>
-        {% for terapeuta in list_terapeutas %}
-            <li> {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }} - <a href="{% url 'main:perfil' terapeuta_codigo=terapeuta.conselho_codigo %}"> Detalhes </a> <br>
-                <a href="{% url 'main:cadastrar_formacao' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Formação </a> <br>
-                <a href="{% url 'main:enviar_arquivo_terapeuta' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Arquivo </a> <br>
+                <h2> Pacientes Inativos: </h2>
+                    {% for paciente in lis_pacientes_inativos %}
+                        <li>
+                        {{ paciente.nome }} - {{ paciente.prontuario_numero }}
+                        <a href="{% url 'main:religamento' prontuario_numero=paciente.prontuario_numero %}"> Reativar </a> <br>
+                        </li>
+                    {% empty %}
+                        <li>No entries found.</li>
+                    {% endfor %}
+                <h2> Terapeutas: </h2>
+                    {% for terapeuta in list_terapeutas %}
+                        <li> {{ terapeuta.nome }} - {{ terapeuta.conselho_codigo }} - <a href="{% url 'main:perfil' terapeuta_codigo=terapeuta.conselho_codigo %}"> Detalhes </a> /
+                        <a href="{% url 'main:cadastrar_formacao' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Formação </a> /
+                        <a href="{% url 'main:enviar_arquivo_terapeuta' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Arquivo </a> <br>
 
-            </li>
-        {% empty %}
-            <li>No entries found.</li>
-        {% endfor %}
-    </ul>
+                        </li>
+                    {% empty %}
+                        <li>No entries found.</li>
+                    {% endfor %}
+            </ul>
         {% endblock %}
-</body>
+
+        </div>
+    </body>
+
+    <footer class="footer">
+        criado por Mário P. Bernardes, 2023
+    </footer>
 </html>

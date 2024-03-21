@@ -2,7 +2,8 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseNotFound, HttpRequest, HttpResponse
 from typing import Union, List
-from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais
+from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais, HistoricoAcademico, \
+    ProfissionaisMedia
 from datetime import date
 from django.db.models.query import QuerySet
 
@@ -117,3 +118,24 @@ def get_terapeuta_by_codigo(terapeuta_codigo: str) -> CadastroProfissionais:
     terapeuta = CadastroProfissionais.objects.get(conselho_codigo=terapeuta_codigo)
 
     return terapeuta
+
+
+def get_terapeuta_historico_academico(terapeuta: CadastroProfissionais) -> QuerySet:
+
+    historico_academico = HistoricoAcademico.objects.filter(terapeuta=terapeuta)
+
+    return historico_academico
+
+
+def get_current_terapeuta_pdf_media(current_terapeuta: CadastroProfissionais) -> QuerySet:
+
+    terapeuta_pdf_media = ProfissionaisMedia.objects.filter(terapeuta=current_terapeuta).exclude(pdf_file='n/d')
+
+    return terapeuta_pdf_media
+
+
+def get_current_terapeuta_image_media(current_terapeuta: CadastroProfissionais) -> QuerySet:
+
+    terapeuta_image_media = ProfissionaisMedia.objects.filter(terapeuta=current_terapeuta).exclude(image_file='n/d')
+    print(terapeuta_image_media)
+    return terapeuta_image_media

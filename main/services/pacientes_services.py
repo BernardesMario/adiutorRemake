@@ -6,7 +6,7 @@ from typing import Union
 from main.services.terapeutas_services import get_current_user_terapeuta
 from main.utils import get_selected_items
 from main.models import (CadastroGrupos, CadastroPacientes, ProntuariosIndividuais, ProntuariosGrupos, PresencasGrupo,
-                         CadastroProfissionais)
+                         CadastroProfissionais, PacientesMedia)
 
 
 def get_selected_pacientes(selected_items: list) -> QuerySet:
@@ -523,4 +523,17 @@ def registro_prontuario_individual_transfer_grupo(transfer_form: 'GrupoTrasferen
         print("Erro ao executar registro_prontuario_individual_transfer_grupo", str(e))
         return False  # se necessario: return pacientes_grupo
 
+
+def get_current_pacient_pdf_media(current_paciente: CadastroPacientes) -> QuerySet:
+
+    paciente_pdf_media = PacientesMedia.objects.filter(paciente=current_paciente).exclude(pdf_file='n/d')
+
+    return paciente_pdf_media
+
+
+def get_current_pacient_image_media(current_paciente: CadastroPacientes) -> QuerySet:
+
+    paciente_image_media = PacientesMedia.objects.filter(paciente=current_paciente).exclude(image_file='n/d')
+
+    return paciente_image_media
 

@@ -12,16 +12,30 @@
      Prontuário nº: {{ paciente.prontuario_numero }}
 </h1>
     <ul>
+        <li> Data de Nascimento: {{ paciente.nascimento}} ( {{ idade }} ) </li>
+        <li> Responsável Legal: {{ paciente.responsavel_legal }} </li>
+        <li> Contato: {{ paciente.telefone_numero }} </li>
+        <li>Observações: {{ paciente.observacoes }} </li>
+
+        <strong> Arquivos do paciente: </strong> <br>
+        PDF:
+        {% for media in pdf_media %}
+
             <li>
-                Data de Nascimento: {{ paciente.nascimento}} ( {{ idade }} ) <br>
-                Responsável Legal: {{ paciente.responsavel_legal }} <br>
-                Contato: {{ paciente.telefone_numero }} <br>
-                         {{ paciente.email }} <br>
-                Observações: {{ paciente.observacoes }}
-
-
-
+                {{ media.description }} - <a href="{% url 'main:paciente/pdf' media_id=media.id %}"> Visualizar </a>
             </li>
+        {% empty %}
+            <li> Sem arquivos para exibir.</li>
+        {% endfor %}
+        <br>
+            Imagens: <br>
+            {% for media in image_media %}
+                <li>
+                    {{ media.description }} - <a href="{% url 'main:paciente/image' media_id=media.id %}"> Visualizar </a>
+                </li>
+            {% empty %}
+                <li> Sem arquivos para exibir.</li>
+            {% endfor %}
     </ul>
 {% endblock %}
 </div>
