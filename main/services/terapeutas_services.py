@@ -1,9 +1,9 @@
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponseNotFound, HttpRequest, HttpResponse
+from django.http import HttpResponseNotFound, HttpRequest
 from typing import Union, List
-from main.models import CustomUser, CadastroProfissionais, ProntuariosIndividuais, HistoricoAcademico, \
-    ProfissionaisMedia
+from main.models import (CustomUser, CadastroProfissionais, ProntuariosIndividuais, HistoricoAcademico,
+                         ProfissionaisMedia)
 from datetime import date
 from django.db.models.query import QuerySet
 

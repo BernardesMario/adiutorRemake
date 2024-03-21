@@ -5,6 +5,7 @@ from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from verify_email.email_handler import send_verification_email
+from adiutor.custom_decorators import user_group_required
 
 from .forms import (TerapeutaRegistrationForm, CadastroPacienteForm, EntradaProntuarioForm, CadastrarConveniosForm,
                     CadastroProfissionaisForm, PacienteDesligamentoForm, PacienteTransferenciaForm,
@@ -22,13 +23,14 @@ from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta
                                           get_current_group, get_pacientes_sem_grupo, filter_active_pacientes,
                                           get_current_group_prontuario, get_pacientes_in_group, get_selected_pacientes,
                                           register_presencas_consulta_grupo, registro_prontuario_religamento_paciente,
-                                          save_new_entrada_prontuario_grupo_in_individual_prontuario,
+                                          save_entrada_prontuario_grupo_in_individual_prontuario,
                                           desligamento_paciente_registro_prontuario_individual, save_desligamento_group,
                                           save_desligamento_paciente_individual, get_current_pacient_pdf_media,
                                           registro_desligamento_grupos, transfer_paciente_individual,
                                           registro_prontuario_transferencia_paciente, save_and_register_grupo_transfer,
                                           registro_prontuario_individual_transfer_grupo, religamento_pacientes,
-                                          filter_inactive_pacientes, get_current_pacient_image_media)
+                                          filter_inactive_pacientes, get_current_pacient_image_media,
+                                          remover_paciente_from_grupo)
 
 from .services.terapeutas_services import (get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta,
                                            associate_new_user_to_cadastro_profissional, get_terapeuta_by_codigo,
@@ -86,6 +88,7 @@ def render_cadastro_grupo_form(request: HttpRequest, grupo_form=None):
 
 
 @login_required(login_url="/main/login")
+@permission_required('main.create_group', raise_exception=True)
 def cadastrar_grupo(request: HttpRequest):
     """View para criar Grupos
     """
@@ -105,6 +108,7 @@ def cadastrar_grupo(request: HttpRequest):
 
 def render_add_pacientes_group_form(request: HttpRequest, pacs_form=None):
     pacientes = get_pacientes_sem_grupo()
+
     if not pacs_form:
         pacs_form = AdicionarPacGrupoForm()
 
@@ -118,11 +122,12 @@ def render_add_pacientes_group_form(request: HttpRequest, pacs_form=None):
 
 
 @login_required(login_url="/main/login")
-def add_pacs_grupo(request: HttpRequest, grupo_id):
+def add_pacientes_to_grupo(request: HttpRequest, grupo_id):
     """ View para adicionar pacientes sem grupo em um Grupo recem criado
     """
     grupo_id = int(grupo_id)
     sucesso = False
+
     if request.method != 'POST':
         return render_add_pacientes_group_form(request)
 
@@ -297,9 +302,9 @@ def add_entrada_sessao_grupo(request: HttpRequest, prontuario_grupo_numero: str)
     pacs_presentes = get_selected_pacientes(selected_items)
 
     register_presencas_success = register_presencas_consulta_grupo(new_entry, pacs_presentes, prontuario_grupo_numero)
-    register_prontuarios_individuais_success = save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry,
-                                                                                                          current_user_terapeuta,
-                                                                                                          pacs_presentes)
+    register_prontuarios_individuais_success = save_entrada_prontuario_grupo_in_individual_prontuario(new_entry,
+                                                                                                      current_user_terapeuta,
+                                                                                                      pacs_presentes)
 
     if register_prontuarios_individuais_success and register_presencas_success:
         sucesso = True
@@ -344,7 +349,7 @@ def desligar_paciente(request: HttpRequest, prontuario_numero: str):
 
     registro_desligamento = desligamento_paciente_registro_prontuario_individual(current_user_terapeuta,
                                                                                  current_paciente, desligamento_form)
-    pac_desligado = save_desligamento_paciente_individual(current_paciente)
+    pac_desligado = save_desligamento_paciente_individual(current_paciente, desligamento_form)
 
     if registro_desligamento and pac_desligado:
         sucesso = True
@@ -369,7 +374,7 @@ def render_desligamento_grupo_form(request: HttpRequest, prontuario_grupo_numero
 
 
 @login_required(login_url="/main/login")
-# definir permissão
+@permission_required('main.deslig_group', raise_exception=True)
 def desligar_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para desligamento de grupos
     """
@@ -461,7 +466,7 @@ def render_transfer_grupo_form(request: HttpRequest, transfer_form=None):
 
 
 @login_required(login_url="/main/login")
-# adicionar permissão
+@permission_required('main.transfer_group', raise_exception=True)
 def transferir_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para transferir grupo de um terapeuta para outro
     """
@@ -762,6 +767,7 @@ def render_producao_mensal_form(request, producao_form=None):
 
 
 @login_required(login_url="/main/login")
+@user_group_required(2)  # 2 = Administrativos group.id
 def producao_mensal(request: HttpRequest):
     """ View para gerar uma tabela das consultas realizadas
     em um determinado espaço de tempo por um terapeuta especifico
@@ -811,6 +817,7 @@ def render_historico_academico_form(request, terapeuta_codigo: str, historico_fo
     return render(request, 'historico_academico.html', context)
 
 
+@login_required(login_url="/main/login")
 def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
     """ View para cadastrar historico academico de terapeutas
     """
@@ -859,6 +866,7 @@ def render_terapeuta_media_form(request, terapeuta_codigo: str, terapeuta_media_
     return render(request, 'upload_terapeuta_media.html', context)
 
 
+@login_required(login_url="/main/login")
 def terapeuta_media_upload(request, terapeuta_codigo: str):
     """View para upload de arquivos relacionados a Terapeutas
     """
@@ -903,6 +911,7 @@ def render_paciente_media_form(request, prontuario_numero: str, paciente_media_f
     return render(request, 'paciente_upload_media.html', context)
 
 
+@login_required(login_url="/main/login")
 def paciente_media_upload(request, prontuario_numero: str):
     """View para upload de arquivos relacionados a Pacientes
     """
@@ -932,6 +941,7 @@ def paciente_media_upload(request, prontuario_numero: str):
     return render(request, 'paciente_upload_media.html', context)
 
 
+@login_required(login_url="/main/login")
 def view_certificado_curso(request, curso_id):
     """ View para visualizar Certificados
         de Histórico Acadêmico
@@ -949,6 +959,7 @@ def view_certificado_curso(request, curso_id):
         return HttpResponse('Arquivo não Encontrado', status=404)
 
 
+@login_required(login_url="/main/login")
 def view_terapeutas_pdf(request, media_id: int):
     """ View para visualizar PDFs relacionados
         a um terapeuta
@@ -962,6 +973,7 @@ def view_terapeutas_pdf(request, media_id: int):
         return response
 
 
+@login_required(login_url="/main/login")
 def view_paciente_pdf(request, media_id):
     """ View para visualização de PDFs
         relacionados aum paciente
@@ -975,6 +987,7 @@ def view_paciente_pdf(request, media_id):
         return response
 
 
+@login_required(login_url="/main/login")
 def view_paciente_images(request, media_id: int):
     """ View para visualização de imagens relacionadas
         a um paciente
@@ -1000,6 +1013,7 @@ def view_paciente_images(request, media_id: int):
         return response
 
 
+@login_required(login_url="/main/login")
 def view_terapeuta_images(request, media_id: int):
     """ View para visualização de imagens relacionadas
         a um terapeuta
@@ -1023,3 +1037,36 @@ def view_terapeuta_images(request, media_id: int):
         response['Content-Disposition'] = 'inline; filename=' + image_file.image_file.name
 
         return response
+
+
+@login_required(login_url="/main/login")
+@permission_required('main.remove_pac_from_group', raise_exception=True)
+def remover_membro_grupo(request, prontuario_numero: str, prontuario_grupo_numero: str):
+    """ View para remover pacientes
+        de um grupo
+    """
+    current_terapeuta = get_current_user_terapeuta(request)
+    current_paciente = get_current_paciente(prontuario_numero)
+    current_grupo = get_current_group(prontuario_grupo_numero)
+
+    if request.method != 'POST':
+        return render_desligamento_form(request, prontuario_numero)
+
+    desligamento_form = PacienteDesligamentoForm(request.POST, initial={'numero': prontuario_numero})
+
+    if not desligamento_form.is_valid():
+        return render_desligamento_form(request, prontuario_numero, desligamento_form)
+
+    if not remover_paciente_from_grupo(current_terapeuta, current_paciente, current_grupo, desligamento_form):
+
+        return redirect('main:handle-error')
+
+    sucesso = True
+
+    context = {
+        'sucesso': sucesso,
+        'grupo': current_grupo,
+        'form': desligamento_form,
+    }
+
+    return render(request, 'deslig_pac.html', context)

@@ -9,6 +9,9 @@ django.setup()
 
 
 class Command(BaseCommand):
+    """ Cria os grupos de usuários Terapeutas e Administrativos
+        e atribui as permissões relevantes para cada grupo
+    """
     def create_group(self, group_name) -> Group:
         group, created = Group.objects.get_or_create(name=group_name)
         if created:
@@ -35,7 +38,7 @@ class Command(BaseCommand):
         permission_data = [
             {
                 'content_type_name': 'main',
-                'model_name': 'prontuarios',
+                'model_name': 'prontuariosindividuais',
                 'permission_codename': 'add_entry',
                 'permission_name': 'Adicionar entradas em prontuários (Terapeutas)',
             },
@@ -87,6 +90,18 @@ class Command(BaseCommand):
                 'permission_codename': 'deslig_group',
                 'permission_name': 'Desligar Grupo (Terapeutas)',
             },
+            {
+                'content_type_name': 'main',
+                'model_name': 'cadastropacientes',
+                'permission_codename': 'remove_pac_from_group',
+                'permission_name': 'Remover Paciente de um Grupo (Terapeutas)',
+            },
+            {
+                'content_type_name': 'main',
+                'model_name': 'cadastrogrupos',
+                'permission_codename': 'create_group',
+                'permission_name': 'Cadastrar Grupo (Terapeutas)',
+            },
             # Adicione aqui novas permissões
             '''
             {
@@ -110,6 +125,7 @@ class Command(BaseCommand):
                     )
                 except ContentType.DoesNotExist:
                     self.stderr.write(self.style.ERROR(f"Content type '{data['content_type_name']}'"
+                                                       f"for '{data['model_name']}'"
                                                        f" não existe. Pulando..."))
                     continue
 

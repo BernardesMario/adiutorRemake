@@ -130,7 +130,8 @@ class CadastroPacientes(models.Model):
         permissions = [
             ('transfer_pac', 'Transferir Paciente (Terapeutas)'),
             ('deslig_pac', 'Desligar Paciente (Terapeutas)'),
-            ('add_pac_group', 'Adicionar Paciente a Grupo (Terapeutas')
+            ('add_pac_group', 'Adicionar Paciente a Grupo (Terapeutas)'),
+            ('remove_pac_from_group', 'Remover Paciente de um Grupo (Terapeutas)')
         ]
 
 
@@ -247,7 +248,8 @@ class CadastroGrupos(models.Model):
         verbose_name_plural = 'Grupos'
         permissions = [
             ('transfer_group', 'Transferir Grupo (Terapeutas)'),
-            ('deslig_group', 'Desligar Grupo (Terapeutas)')
+            ('deslig_group', 'Desligar Grupo (Terapeutas)'),
+            ('create_group', 'Cadastrar Grupo (Terapeutas)')
         ]
 
 

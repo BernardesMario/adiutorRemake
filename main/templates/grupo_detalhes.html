@@ -24,6 +24,9 @@
                 Nome: {{ participante.nome }}
                 Prontuário Individual: {{ participante.prontuario_numero }}
                 Contato: {{ paciente.telefone_numero }} <br>
+
+                <a href="{% url 'main:remove_paciente' prontuario_numero=participante.prontuario_numero prontuario_grupo_numero=grupo.prontuario_grupo_numero%}"> Remover participante </a>
+
                 </li>
                 {% empty %}
                 <li>No entries found.</li>
@@ -41,6 +44,4 @@
     <footer class="footer">
         criado por Mário P. Bernardes, 2023
     </footer>
-</html>
-</body>
 </html>

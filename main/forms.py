@@ -9,10 +9,12 @@ from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      HistoricoAcademico, ProfissionaisMedia, PacientesMedia)
 from accounts.models import CustomUser
 from .services.pacientes_services import (is_data_nova_consulta_group_valid)
-from .services.pacientes_forms_services import is_paciente_menor_acompanhado, cpf_responsavel_required_when_responsavel, \
-    is_data_nova_consulta_individual_valid, ensure_paciente_convenio_carteirinha
-from .utils import is_date_not_future, certificado_year_validator, calculate_age, is_image_file_extension_valid, \
-    media_form_ensure_file
+from .services.pacientes_forms_services import (is_paciente_menor_acompanhado,
+                                                cpf_responsavel_required_when_responsavel,
+                                                is_data_nova_consulta_individual_valid,
+                                                ensure_paciente_convenio_carteirinha)
+from .utils import (is_date_not_future, certificado_year_validator, calculate_age, is_image_file_extension_valid,
+                    media_form_ensure_file)
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
@@ -436,7 +438,6 @@ class UpdatePacienteForm(forms.ModelForm):
 
 
 class GenerateProducaoForm(forms.Form):
-
     terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
         label='Novo Terapeuta',
@@ -479,7 +480,6 @@ class GenerateProducaoForm(forms.Form):
 
 
 class HistoricoAcademicoForm(forms.ModelForm):
-
     curso = forms.CharField(label='Curso', validators=[validate_letters])
 
     instituicao = forms.CharField(label='Instituição', validators=[validate_letters])
@@ -516,7 +516,6 @@ class HistoricoAcademicoForm(forms.ModelForm):
 
 
 class TerapeutaMediaUploadForm(forms.ModelForm):
-
     pdf_file = forms.FileField(label='PDF', widget=forms.ClearableFileInput(attrs={'multiple': False,
                                                                                    'accept': 'application/pdf'}),
                                validators=[FileExtensionValidator(['pdf'])], required=False)
@@ -551,7 +550,6 @@ class TerapeutaMediaUploadForm(forms.ModelForm):
 
 
 class PacienteMediaUploadForm(forms.ModelForm):
-
     pdf_file = forms.FileField(label='PDF', widget=forms.ClearableFileInput(attrs={'multiple': False,
                                                                                    'accept': 'application/pdf'}),
                                validators=[FileExtensionValidator(['pdf'])], required=False)

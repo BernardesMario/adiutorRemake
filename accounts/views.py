@@ -1,5 +1,6 @@
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from main.services.terapeutas_services import get_terapeutas_group, get_administrativo_group
 from main.services.users_service import redirect_logged_user_to_home
 from rest_framework.views import APIView
@@ -28,7 +29,7 @@ class LoginWithOTP(APIView):
         mail_sent_message = str(f"Insira o código de uso único enviado ao email: {hidden_mail_sent_to} para continuar")
         otp_form = LoginWithOTPForm
 
-        #return Response({'message': f'Seu código de uso único foi enviado ao email: {hidden_mail_sent_to}!'},
+        # return Response({'message': f'Seu código de uso único foi enviado ao email: {hidden_mail_sent_to}!'},
         #                status=status.HTTP_200_OK)
 
         context = {
@@ -63,3 +64,10 @@ class LoginWithOTP(APIView):
             # return Response({'success': 'Usuário autenticado com sucesso!'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Código de uso único inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@login_required(login_url="/main/login")
+def logout_view(request):
+    logout(request)
+
+    return redirect('main:login')

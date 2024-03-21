@@ -32,7 +32,8 @@ def when_add_pacientes_to_group_get_info_and_act(request: HttpRequest, prontuari
 
     update_result = update_cadastro_pacientes_when_add_to_grupo(pacs_add, current_group, current_user_terapeuta)
 
-    registration_result = registro_prontuario_when_pacientes_add_to_group(pacs_add, current_group, current_user_terapeuta)
+    registration_result = registro_prontuario_when_pacientes_add_to_group(pacs_add, current_group,
+                                                                          current_user_terapeuta)
 
     if update_result and registration_result:
         return True
@@ -167,7 +168,8 @@ def get_current_paciente_prontuario(prontuario_numero: str) -> ProntuariosIndivi
     """ Retorna um objeto "Prontuario" da model Prontuarios
     baseado no numero do prontuario
     """
-    current_paciente_prontuario = ProntuariosIndividuais.objects.filter(numero_id=prontuario_numero).order_by('-data_consulta')
+    current_paciente_prontuario = ProntuariosIndividuais.objects.filter(numero_id=prontuario_numero).order_by(
+        '-data_consulta')
 
     return current_paciente_prontuario
 
@@ -244,18 +246,22 @@ def get_ultima_entrada_prontuarios_paciente_individual(numero: str) -> Union[dat
     return ultima_entrada_data
 
 
-def save_desligamento_paciente_individual(current_pac: CadastroPacientes) -> bool:
+def save_desligamento_paciente_individual(current_pac: CadastroPacientes,
+                                          desligamento_form: 'PacienteDesligamentoForm') -> bool:
     """Desliga um paciente
     """
+    try:
+        data_final = desligamento_form.cleaned_data.get('data_final')
+        current_pac.desligado = True
+        current_pac.data_final = data_final
+        current_pac.modalidade_atendimento = 0
+        current_pac.grupo = None
+        current_pac.save()
 
-    current_pac.desligado = True
-    current_pac.save()
-
-    if current_pac.desligado:
-        print("Paciente Desligado com sucesso!")
         return True
-    else:
-        print("Erro durante save_desligamento_paciente_individual")
+
+    except Exception as e:
+        print(f'Erro {e} ao executar save_desligameto')
         return False
 
 
@@ -271,9 +277,9 @@ def desligamento_paciente_registro_prontuario_individual(current_user_terapeuta:
                                               autor=current_user_terapeuta,
                                               data_consulta=data_final,
                                               entrada=f"Paciente {current_pac.nome} foi desligado por "
-                                              f"{current_user_terapeuta}"
-                                              f" em {data_final}. "
-                                              f"\n Motivo: {entrada_text}", )
+                                                      f"{current_user_terapeuta}"
+                                                      f" em {data_final}. "
+                                                      f"\n Motivo: {entrada_text}", )
         return True
 
     except Exception as e:
@@ -321,10 +327,10 @@ def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: Cadastr
                                                   autor=current_user_terapeuta,
                                                   data_consulta=data_final,
                                                   entrada=f"Grupo {current_grp.label} "
-                                                  f"prontuário {current_grp.prontuario_grupo_numero} "
-                                                  f"foi desligado por {current_user_terapeuta} "
-                                                  f"em {data_final}."
-                                                  f"\n Motivo: {entrada_text}", )
+                                                          f"prontuário {current_grp.prontuario_grupo_numero} "
+                                                          f"foi desligado por {current_user_terapeuta} "
+                                                          f"em {data_final}."
+                                                          f"\n Motivo: {entrada_text}", )
         return True  # se necessário, retornar (pacientes_grupo)
 
     except Exception as e:
@@ -358,8 +364,8 @@ def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes,
                                               autor=current_user_terapeuta,
                                               data_consulta=data_transfer,
                                               entrada=f"Paciente {current_pac.nome} foi transferido por "
-                                              f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
-                                              f"\n Motivo: {entrada_text}", )
+                                                      f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
+                                                      f"\n Motivo: {entrada_text}", )
         return True
 
     except Exception as e:
@@ -395,7 +401,7 @@ def registro_prontuario_religamento_paciente(current_pac: CadastroPacientes, rel
                                               autor=novo_terapeuta,
                                               data_consulta=data_religamento,
                                               entrada=f"Paciente {current_pac.nome} reiniciou o processo no dia"
-                                              f"{data_religamento} com  {novo_terapeuta}.")
+                                                      f"{data_religamento} com  {novo_terapeuta}.")
 
         return True
 
@@ -406,10 +412,10 @@ def registro_prontuario_religamento_paciente(current_pac: CadastroPacientes, rel
 
 
 def get_pacientes_sem_grupo() -> QuerySet:
-    """Filtra todos os pacientes que não estão em grupos
+    """Filtra todos os pacientes Ativos que não estão em grupos
     """
 
-    pacientes = CadastroPacientes.objects.filter(grupo__isnull=True)
+    pacientes = CadastroPacientes.objects.filter(grupo__isnull=True, desligado=False)
 
     return pacientes
 
@@ -438,9 +444,9 @@ def register_presencas_consulta_grupo(new_entry: ProntuariosGrupos, pacs_present
     # se necessario: return pacs_presentes
 
 
-def save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry: ProntuariosGrupos,
-                                                               current_user_terapeuta: CadastroProfissionais,
-                                                               pacs_presentes: QuerySet) -> bool:
+def save_entrada_prontuario_grupo_in_individual_prontuario(new_entry: ProntuariosGrupos,
+                                                           current_user_terapeuta: CadastroProfissionais,
+                                                           pacs_presentes: QuerySet) -> bool:
     """Cria um cópia da entrada do prontuario do grupo nos
     prontuarios individuais dos pacientes presentes nas sessão
     """
@@ -466,7 +472,6 @@ def save_new_entrada_prontuario_grupo_in_individual_prontuario(new_entry: Prontu
 def save_and_register_grupo_transfer(transfer_form: 'GrupoTrasferenciaForm',
                                      current_user_terapeuta: CadastroProfissionais,
                                      current_grupo: CadastroGrupos) -> bool:
-
     """Transfere o grupo de um terapeuta para outro e
     registra essa mudança no prontuario do Grupo"""
 
@@ -525,15 +530,59 @@ def registro_prontuario_individual_transfer_grupo(transfer_form: 'GrupoTrasferen
 
 
 def get_current_pacient_pdf_media(current_paciente: CadastroPacientes) -> QuerySet:
-
     paciente_pdf_media = PacientesMedia.objects.filter(paciente=current_paciente).exclude(pdf_file='n/d')
 
     return paciente_pdf_media
 
 
 def get_current_pacient_image_media(current_paciente: CadastroPacientes) -> QuerySet:
-
     paciente_image_media = PacientesMedia.objects.filter(paciente=current_paciente).exclude(image_file='n/d')
 
     return paciente_image_media
 
+
+def register_paciente_removido_from_grupo(current_user_terapeuta: CadastroProfissionais,
+                                          current_paciente: CadastroPacientes,
+                                          current_grupo: CadastroGrupos,
+                                          desligamento_form: 'PacienteDesligamentoForm') -> bool:
+    """ Cria um registro da remoção de um Paciente de Grupo no
+        Prontuario individual
+    """
+
+    entrada_text = desligamento_form.cleaned_data.get('entrada_text')
+    data_final = desligamento_form.cleaned_data.get('data_final')
+
+    try:
+        ProntuariosIndividuais.objects.create(numero=current_paciente,
+                                              autor=current_user_terapeuta,
+                                              data_consulta=data_final,
+                                              entrada=f"Paciente {current_paciente.nome} foi desligado do grupo"
+                                                      f"{current_grupo.label} por {current_user_terapeuta}"
+                                                      f" em {data_final}. "
+                                                      f"\n Motivo: {entrada_text}", )
+        return True
+
+    except Exception as e:
+        print("Ocorreu um erro ao executar register_paciente_removido_from_grupo!", str(e))
+        return False
+
+
+def remover_paciente_from_grupo(current_terapeuta: CadastroProfissionais, current_paciente: CadastroPacientes,
+                                current_grupo: CadastroGrupos,
+                                desligamento_form: 'PacienteDesligamentoForm') -> bool:
+
+    data_final = desligamento_form.cleaned_data.get('data_final')
+    desligado = desligamento_form.cleaned_data.get('desligado')
+    try:
+        current_paciente.desligado = desligado
+        current_paciente.data_final = data_final
+        current_paciente.modalidade_atendimento = 0
+        current_paciente.grupo = None
+        current_paciente.save()
+
+        return register_paciente_removido_from_grupo(current_terapeuta, current_paciente,
+                                                     current_grupo, desligamento_form)
+
+    except Exception as e:
+        print("Ocorreu um erro ao executar remove_paciente_from_grupo!", str(e))
+        return False
