@@ -174,7 +174,6 @@ def index(request: HttpRequest):
 
 
 @login_required(login_url="/main/login")
-# TODO criar permissão para visualização de prontuario
 def list_entradas(request: HttpRequest, prontuario_numero: str, as_pdf=False):
     """View para exibir o prontuario individual de um paciente
     """
@@ -194,11 +193,11 @@ def list_entradas(request: HttpRequest, prontuario_numero: str, as_pdf=False):
         return render_to_pdf(template, context)
 
     template = 'prontuario_pac.html'
+
     return render(request, template, context)
 
 
 @login_required(login_url="/main/login")
-# TODO Criar permissão para ver prontuarios
 def list_entradas_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para exibir o prontuario de um grupo
     """

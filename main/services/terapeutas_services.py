@@ -82,35 +82,31 @@ def producao_generator(current_terapeuta: CadastroProfissionais, data_inicial: d
     return producao
 
 
-def producao_detalhamento(producao: QuerySet) -> List:
+def producao_detalhamento(producao: QuerySet) -> dict:
+    """
+    Gera um dict onde as keys são Pacientes, e valores são dict contendo os detalhes do paciente
+    e uma listagem de consultas para cada paciente
+    """
+    results_dict = {}
 
-    results_list = []
-    try:
-        for atendimento in producao:
+    for atendimento in producao:
+        current_paciente = atendimento.numero
+        consulta_dict = {
+            'consulta_data': atendimento.data_consulta,
+            'entrada_data': atendimento.data_entrada,
+        }
 
-            current_paciente = atendimento.numero
+        if current_paciente.nome not in results_dict:
+            results_dict[current_paciente.nome] = {
+                'consulta_paciente': current_paciente.nome,
+                'consulta_convênio': current_paciente.convenio,
+                'convenio_identificador': current_paciente.carteirinha_convenio,
+                'consultas': [consulta_dict]
+            }
 
-            consulta_dict = {'consulta_data': atendimento.data_consulta,
-                             'consulta_paciente': current_paciente.nome,
-                             'consulta_prontuario': current_paciente.prontuario_numero,
-                             'consulta_convênio': current_paciente.convenio}
+        results_dict[current_paciente.nome]['consultas'].append(consulta_dict)
 
-            results_list.append(consulta_dict)
-
-    except Exception as e:
-        print("Occoreu um erro na crianção da produção:", e)
-
-        return HttpResponseNotFound
-
-    return results_list
-
-
-def sort_producao_detalhamento(producao: List) -> List:
-
-    sorted_list = sorted(producao, key=lambda x: (x['consulta_paciente'], x['consulta_data']))
-    print(sorted_list)
-
-    return sorted_list
+    return results_dict
 
 
 def get_terapeuta_by_codigo(terapeuta_codigo: str) -> CadastroProfissionais:
@@ -137,5 +133,5 @@ def get_current_terapeuta_pdf_media(current_terapeuta: CadastroProfissionais) ->
 def get_current_terapeuta_image_media(current_terapeuta: CadastroProfissionais) -> QuerySet:
 
     terapeuta_image_media = ProfissionaisMedia.objects.filter(terapeuta=current_terapeuta).exclude(image_file='n/d')
-    print(terapeuta_image_media)
+
     return terapeuta_image_media

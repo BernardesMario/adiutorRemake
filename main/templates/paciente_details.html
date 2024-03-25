@@ -1,6 +1,7 @@
 {% extends 'middleman1.html' %}
 {% load bootstrap5 %}
 {% load static%}
+{% load custom_filters %}
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -13,8 +14,16 @@
 </h1>
     <ul>
         <li> Data de Nascimento: {{ paciente.nascimento}} ( {{ idade }} ) </li>
-        <li> Responsável Legal: {{ paciente.responsavel_legal }} </li>
-        <li> Contato: {{ paciente.telefone_numero }} </li>
+        <li> CPF: {{ paciente.cpf_numero | format_cpf }} </li>
+        {% if paciente.responsavel_legal %}
+        <li> Responsável Legal: {{ paciente.responsavel_legal }}, CPF: {{ paciente.cpf_responsavel_legal | format_cpf }} </li>
+        {% endif %}
+        <li> Telefone: {{ paciente.telefone_numero | format_phone_number }} </li>
+        <li> Convênio: {{ paciente.convenio }}
+        {% if paciente.carteirinha_convenio %}
+        , Nº carteirinha: {{ paciente.carteirinha_convenio }}</li>
+        {% endif %}
+        <li> Tipo de Atendimento: {{ paciente.get_modalidade_atendimento_display }}</li>
         <li>Observações: {{ paciente.observacoes }} </li>
 
         <strong> Arquivos do paciente: </strong> <br>

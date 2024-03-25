@@ -18,9 +18,10 @@ from .utils import (is_date_not_future, certificado_year_validator, calculate_ag
 
 
 class TerapeutaRegistrationForm(UserCreationForm):
-    phone_number = forms.CharField(validators=[
+    phone_number = forms.CharField(label='Telefone',validators=[
         validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)])
-    username = forms.CharField(validators=[validate_letters])
+    username = forms.CharField(label='Usuário', validators=[validate_letters])
+    email = forms.EmailField(label='E-mail')
 
     class Meta:
         model = CustomUser
@@ -38,15 +39,15 @@ class TerapeutaRegistrationForm(UserCreationForm):
 
 class CadastroProfissionaisForm(forms.ModelForm):
     nome = forms.CharField(validators=[validate_letters])
-    endereco_rua = forms.CharField(validators=[validate_letters])
-    endereco_bairro = forms.CharField(validators=[validate_letters])
+    endereco_rua = forms.CharField(validators=[validate_letters], label='Endereço')
+    endereco_bairro = forms.CharField(validators=[validate_letters], label='Bairro')
     cidade = forms.CharField(validators=[validate_letters])
-    unimed_codigo = forms.CharField(validators=[validate_numbers])
-    conselho_codigo = forms.CharField(validators=[validate_numbers])
-    rg_numero = forms.CharField(validators=[validate_numbers])
-    cpf_numero = forms.CharField(validators=[validate_numbers])
-    endereco_numero = forms.CharField(validators=[validate_numbers])
-    cep_numero = forms.CharField(validators=[validate_numbers])
+    unimed_codigo = forms.CharField(validators=[validate_numbers], label='Nº Cadastro Unimed')
+    conselho_codigo = forms.CharField(validators=[validate_numbers], label='N° CRP')
+    rg_numero = forms.CharField(validators=[validate_numbers], label='N° RG')
+    cpf_numero = forms.CharField(validators=[validate_numbers], label='CPF')
+    endereco_numero = forms.CharField(validators=[validate_numbers], label='N°')
+    cep_numero = forms.CharField(validators=[validate_numbers], label='CEP')
 
     class Meta:
         model = CadastroProfissionais
@@ -84,15 +85,16 @@ class CadastroPacienteForm(forms.ModelForm):
             pass
 
     nome = forms.CharField(validators=[validate_letters])
-    cpf_numero = forms.CharField(validators=[validate_numbers])
-    carteirinha_convenio = forms.CharField(validators=[validate_numbers])
-    telefone_numero = forms.CharField(validators=[validate_numbers])
-    endereco_numero = forms.CharField(validators=[validate_numbers])
-    endereco_rua = forms.CharField(validators=[validate_letters])
-    endereco_bairro = forms.CharField(validators=[validate_letters])
+    cpf_numero = forms.CharField(validators=[validate_numbers], label='CPF')
+    carteirinha_convenio = forms.CharField(validators=[validate_numbers], label='Nº Carteirinha do Convênio')
+    telefone_numero = forms.CharField(validators=[validate_numbers], label='Telefone')
+    endereco_numero = forms.CharField(validators=[validate_numbers], label='Nº')
+    endereco_rua = forms.CharField(validators=[validate_letters], label='Endereço')
+    endereco_bairro = forms.CharField(validators=[validate_letters], label='Bairro')
     cidade = forms.CharField(validators=[validate_letters])
-    cep_numero = forms.CharField(validators=[validate_numbers])
-    cpf_responsavel_legal = forms.CharField(validators=[validate_numbers])
+    cep_numero = forms.CharField(validators=[validate_numbers], label='CEP')
+    cpf_responsavel_legal = forms.CharField(validators=[validate_numbers], label='CPF do Responsável')
+    convenio = forms.CharField(validators=[validate_letters], label='Convênio')
 
     class Meta:
         model = CadastroPacientes
@@ -202,11 +204,15 @@ class CadastroPacienteNovoForm(forms.ModelForm):
 
 
 class CadastroGrupoForm(forms.ModelForm):
-    prontuario_grupo_numero = forms.CharField(validators=[validate_numbers])
+    prontuario_grupo_numero = forms.CharField(validators=[validate_numbers], label='Nº Prontuário')
+    terapeuta_auxiliar = forms.ModelChoiceField(
+        queryset=CadastroProfissionais.objects.all(),
+        label='Ego Auxiliar',
+    )
 
     class Meta:
         model = CadastroGrupos
-        fields = ['label', 'prontuario_grupo_numero',
+        fields = ['label', 'prontuario_grupo_numero', 'terapeuta_auxiliar',
                   'terapeuta_responsavel', 'data_inicio']
 
         widgets = {'data_inicio': forms.DateInput(
@@ -214,6 +220,18 @@ class CadastroGrupoForm(forms.ModelForm):
                    'class': 'form-control'}
         )
         }
+
+    def _raise_if_terapeuta_responsavel_igual_auxiliar(self):
+        terapeuta_principal = self.cleaned_data.get['terapeuta_responsavel']
+        terapeuta_auxiliar = self.cleaned_data.get['terapeuta_auxiliar']
+
+        if not terapeuta_principal != terapeuta_auxiliar:
+            raise forms.ValidationError(" Terapeuta responsável não pode ser igual ao Ego Auxiliar")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        self._raise_if_terapeuta_responsavel_igual_auxiliar()
+        return cleaned_data
 
 
 class AdicionarPacGrupoForm(forms.ModelForm):
@@ -223,14 +241,14 @@ class AdicionarPacGrupoForm(forms.ModelForm):
 
 
 class CadastrarConveniosForm(forms.ModelForm):
-    cnpj_numero = forms.CharField(validators=[validate_numbers])
-    endereco_numero = forms.CharField(validators=[validate_numbers])
-    cep_numero = forms.CharField(validators=[validate_numbers])
-    telefone_numero = forms.CharField(validators=[validate_numbers])
-    endereco_rua = forms.CharField(validators=[validate_letters])
-    endereco_bairro = forms.CharField(validators=[validate_letters])
+    cnpj_numero = forms.CharField(validators=[validate_numbers], label='CNPJ')
+    endereco_numero = forms.CharField(validators=[validate_numbers], label='Nº')
+    cep_numero = forms.CharField(validators=[validate_numbers], label='CEP')
+    telefone_numero = forms.CharField(validators=[validate_numbers], label='Telefone')
+    endereco_rua = forms.CharField(validators=[validate_letters], label='Rua')
+    endereco_bairro = forms.CharField(validators=[validate_letters], label='Bairro')
     cidade = forms.CharField(validators=[validate_letters])
-    responsavel_contato = forms.CharField(validators=[validate_letters])
+    responsavel_contato = forms.CharField(validators=[validate_letters], label='Contato do Responsável')
 
     class Meta:
         model = ConveniosAceitos
@@ -438,9 +456,11 @@ class UpdatePacienteForm(forms.ModelForm):
 
 
 class GenerateProducaoForm(forms.Form):
+    """ Unbound form para geração da lista de consulta
+    """
     terapeuta = forms.ModelChoiceField(
         queryset=CadastroProfissionais.objects.all(),
-        label='Novo Terapeuta',
+        label='Terapeuta',
         required=True
     )
 

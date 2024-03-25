@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
@@ -27,7 +28,12 @@ def when_add_pacientes_to_group_get_info_and_act(request: HttpRequest, prontuari
 
     current_user_terapeuta = get_current_user_terapeuta(request)
     current_group = get_current_group(prontuario_grupo_numero)
+
     selected_items = get_selected_items(request)
+
+    if not selected_items:
+        raise ValidationError("Nenhum paciente selecionado!")
+
     pacs_add = get_selected_pacientes(selected_items)
 
     update_result = update_cadastro_pacientes_when_add_to_grupo(pacs_add, current_group, current_user_terapeuta)
@@ -37,6 +43,7 @@ def when_add_pacientes_to_group_get_info_and_act(request: HttpRequest, prontuari
 
     if update_result and registration_result:
         return True
+
     else:
         if not update_result:
             print("Erro: update de cadastro falhou!")

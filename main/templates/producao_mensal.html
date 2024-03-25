@@ -1,3 +1,5 @@
+
+
 {% extends 'middleman1.html' %}
 {% load bootstrap5 %}
 {% load static%}
@@ -14,26 +16,55 @@
 
 {% block content %}
 <h1> Produção de  {{ terapeuta.nome }} </h1>
-    <h2> Período: {{ data_inicial }} - {{ data_final }} <br>
+
+    <h2> Período: {{ data_inicial }} -
+        {% if data_final %}
+            {{ data_final }}
+        {% else %}
+            {% now "j F Y" %}
+        {% endif %} <br>
          Total de atendimentos: {{ producao_count }}
     </h2>
     {% csrf_token %}
-    <ul>
-        <h2> Consultas Registradas: </h2>
-        {% for atendimento in atendimentos %}
-            <li>
-                Nome: {{ atendimento.consulta_paciente }} - {{ atendimento.consulta_convênio }} <br>
-                 Data: {{ atendimento.consulta_data }}
-            </li>
-        {% empty %}
 
-            <li>No entries found.</li>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Convênio</th>
+                <th>Carteirinha</th>
+                <th>Data</th>
+                <th>Enviado em</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for paciente, detalhes_paciente in atendimentos.items %}
+                <tr>
+                    <td>{{ detalhes_paciente.consulta_paciente }}</td>
+                    <td>{{ detalhes_paciente.consulta_convênio }}</td>
+                    <td>{{ detalhes_paciente.convenio_identificador }}</td>
+                    <td>
+                        {% for consulta in detalhes_paciente.consultas %}
+                            {{ consulta.consulta_data }}<br>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for consulta in detalhes_paciente.consultas %}
+                            {{ consulta.entrada_data }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5"> Sem atendimentos para exibir!</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 
-        {% endfor %}
-
-    </ul>
 {% endblock %}
 
+</div>
 
 </body>
 </html>

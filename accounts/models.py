@@ -11,7 +11,7 @@ def validate_numbers(value):
 
 
 class CustomUser(AbstractUser):
-    email = models.EmailField(unique=True, verbose_name='Email')
+    email = models.EmailField(unique=True, verbose_name='E-mail')
     # Incluido para possibilidade de 2SA por SMS
     phone_number = models.CharField(max_length=11, unique=True, verbose_name='Telefone', validators=[
         validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)

@@ -82,7 +82,7 @@ class CadastroPacientes(models.Model):
         (1, 'Grupo'),
         (2, 'Casal'),
     )
-    modalidade_atendimento = models.IntegerField(verbose_name='Modalidade', choices=MOD_CHOICES)
+    modalidade_atendimento = models.IntegerField(verbose_name='Modalidade', choices=MOD_CHOICES, default=0)
     grupo = models.ForeignKey(
         'CadastroGrupos',
         related_name='membros',
@@ -233,7 +233,7 @@ class CadastroGrupos(models.Model):
         verbose_name='Terapeuta Responsável'
     )
 
-    terapeuta_auxiliar = models.ManyToManyField(CadastroProfissionais, verbose_name='Terapeuta Auxiliar', blank=True)
+    terapeuta_auxiliar = models.ManyToManyField(CadastroProfissionais, verbose_name='Ego Auxiliar', blank=True)
     desligado = models.BooleanField(verbose_name='Desativado', help_text='Grupo encerrado', default=False)
     data_inicio = models.DateField(verbose_name='Data de Inicio', help_text='dd/mm/aaaa')
     data_final = models.DateField(verbose_name='Data do Desligamento', help_text='dd/mm/aaaa', blank=True, null=True,
