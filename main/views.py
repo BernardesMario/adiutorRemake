@@ -707,6 +707,7 @@ def religar_paciente(request: HttpRequest, prontuario_numero: str):
 
     current_paciente = get_current_paciente(prontuario_numero)
     paciente_religado = religamento_pacientes(current_paciente, relig_form)
+    # verificar nome deslig\relig
     registro_desligamento = registro_prontuario_religamento_paciente(current_paciente, relig_form)
 
     if paciente_religado and registro_desligamento:
