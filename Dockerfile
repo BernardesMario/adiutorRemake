@@ -1,4 +1,4 @@
-FROM python:3.12-buster
+FROM python:3.12-bookworm
 ENV PYTHONUNBUFFERED 1
 
 RUN mkdir /src
