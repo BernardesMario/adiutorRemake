@@ -1,5 +1,4 @@
 from django.contrib.auth.models import Group
-from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
 
 
@@ -14,9 +13,9 @@ def user_group_required(group_id):
 
             group = Group.objects.get(id=group_id)
             if not request.user.groups.filter(id=group.id).exists():
-                return HttpResponseForbidden("You don't have permission to access this page.")
 
-            # If the user is in the specified group, execute the original view function
+                return redirect('main:handle-error')
+
             return view_func(request, *args, **kwargs)
         return wrapper
     return decorator

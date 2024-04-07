@@ -37,7 +37,8 @@ def is_date_not_future(data_field: date) -> bool:
 
 
 def certificado_year_validator(input_year: int) -> bool:
-    """ Validação para o campo 'ano_conclusao' da model HistoricoAcademico
+    """ Validação para o campo 'ano_conclusao'
+    da model HistoricoAcademico
     """
 
     min_value = 1924

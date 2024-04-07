@@ -1,6 +1,4 @@
-from django.contrib.auth import login as user_login
 from django.contrib.auth.decorators import permission_required, login_required
-from django.contrib.auth.forms import AuthenticationForm
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -51,7 +49,7 @@ def render_cadastro_paciente_form(request: HttpRequest, cadastro_form=None):
     return render(request, 'cadastramento_pac.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def cadastrar_paciente(request: HttpRequest):
     """View para cadastramento de pacientes
     """
@@ -87,7 +85,7 @@ def render_cadastro_grupo_form(request: HttpRequest, grupo_form=None):
     return render(request, 'cadastramento_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.create_group', raise_exception=True)
 def cadastrar_grupo(request: HttpRequest):
     """View para criar Grupos
@@ -121,7 +119,7 @@ def render_add_pacientes_group_form(request: HttpRequest, pacs_form=None):
     return render(request, 'add_pac_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def add_pacientes_to_grupo(request: HttpRequest, grupo_id):
     """ View para adicionar pacientes sem grupo em um Grupo recem criado
     """
@@ -150,7 +148,7 @@ def add_pacientes_to_grupo(request: HttpRequest, grupo_id):
     return render(request, 'add_pac_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def index(request: HttpRequest):
     """ View para a página principal de Usuarios do Grupo Terapeuta
     lista todos os pacientes e grupos, divididos por ativos e inativos
@@ -197,7 +195,7 @@ def list_entradas(request: HttpRequest, prontuario_numero: str, as_pdf=False):
     return render(request, template, context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def list_entradas_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para exibir o prontuario de um grupo
     """
@@ -227,7 +225,7 @@ def render_add_entrada_prontuario_individual(request, prontuario_numero: str, en
     return render(request, 'nova_entrada.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.add_entry', raise_exception=True)
 def add_entrada(request: HttpRequest, prontuario_numero: str):
     """View para adicionar entradas no
@@ -274,7 +272,7 @@ def render_add_entrada_prontuario_grupo(request: HttpRequest, prontuario_grupo_n
     return render(request, 'nova_entrada_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.add_entry_group', raise_exception=True)
 def add_entrada_sessao_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """ View para adicionar novas entradas em prontuario de Grupo
@@ -328,7 +326,7 @@ def render_desligamento_form(request: HttpRequest, prontuario_numero: str, desli
     return render(request, 'deslig_pac.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.deslig_pac', raise_exception=True)
 def desligar_paciente(request: HttpRequest, prontuario_numero: str):
     """ View para desligar um paciente
@@ -372,7 +370,7 @@ def render_desligamento_grupo_form(request: HttpRequest, prontuario_grupo_numero
     return render(request, 'deslig_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.deslig_group', raise_exception=True)
 def desligar_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para desligamento de grupos
@@ -419,7 +417,7 @@ def render_transfer_paciente_form(request: HttpRequest, transfer_form=None):
     return render(request, 'transfer_pac.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.transfer_pac', raise_exception=True)
 def transferir_paciente(request: HttpRequest, prontuario_numero: str) -> HttpResponse:
     """View para transferir pacientes individuais de
@@ -464,7 +462,7 @@ def render_transfer_grupo_form(request: HttpRequest, transfer_form=None):
     return render(request, 'transfer_grupo.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.transfer_group', raise_exception=True)
 def transferir_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     """View para transferir grupo de um terapeuta para outro
@@ -513,7 +511,7 @@ def render_cadastro_user_terapeuta_forms(request: HttpRequest, user_form=None, t
     return render(request, 'cadastramento_user.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.add_terapeuta', raise_exception=True)
 def cadastro_user_terapeuta(request: HttpRequest):
     """ View para cadastrar novos Terapeutas e Usuários relacionado ao terapeuta
@@ -550,7 +548,7 @@ def cadastro_user_terapeuta(request: HttpRequest):
     return render(request, 'cadastramento_user.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def index_perfil(request: HttpRequest):
     """ View para exibir todos os pacientes e terapeutas registrados
     para usuários administrativos (redirect para alterações cadastrais)
@@ -568,8 +566,11 @@ def index_perfil(request: HttpRequest):
     return render(request, 'list_perfils.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def informacoes_terapeuta(request: HttpRequest, terapeuta_codigo: str):
+    """ View para exibir informações dos Profissionais
+    do grupo Terapeutas
+    """
 
     current_terapeuta = get_terapeuta_by_codigo(terapeuta_codigo)
     historico_academico = get_terapeuta_historico_academico(current_terapeuta)
@@ -585,44 +586,11 @@ def informacoes_terapeuta(request: HttpRequest, terapeuta_codigo: str):
     return render(request, 'user_perfil.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def admin_interface(request: HttpRequest):
     """ View para a página inical de usuários do grupo 'Administrativos'.
     """
     return render(request, 'admin_main.html')
-
-
-def render_login_form(request: HttpRequest, login_form=None):
-    if not login_form:
-        login_form = AuthenticationForm()
-
-    context = {
-        'form': login_form
-    }
-    return render(request, 'login.html', context)
-
-
-def usuario_login(request: HttpRequest):
-    if request.method != 'POST':
-        return render_login_form(request)
-
-    login_form = AuthenticationForm(request, request.POST)
-
-    if not login_form.is_valid():
-        return render_login_form(request, login_form)
-
-    current_user = login_form.get_user()
-
-    if current_user.require_otp_login:
-        redirect_url = reverse('account:login-with-otp') + f'?email={current_user.email}'
-        return redirect(redirect_url)
-
-    user_login(request, current_user)
-
-    terapeutas_group = get_terapeutas_group()
-    administrativo_group = get_administrativo_group()
-
-    return redirect_logged_user_to_home(current_user, terapeutas_group, administrativo_group)
 
 
 def render_novo_convenio_form(request: HttpRequest, convenio_form=None):
@@ -636,7 +604,7 @@ def render_novo_convenio_form(request: HttpRequest, convenio_form=None):
     return render(request, 'add_convenio.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.add_convenio', raise_exception=True)
 def novo_convenio(request: HttpRequest):
     """ View para registrar novos convênios
@@ -660,7 +628,7 @@ def novo_convenio(request: HttpRequest):
     return render(request, 'add_convenio.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def detalhes_paciente(request: HttpRequest, prontuario_numero: str):
     """ Exibe informações cadastradas sobre um paciente
     """
@@ -682,8 +650,10 @@ def detalhes_paciente(request: HttpRequest, prontuario_numero: str):
     return render(request, 'paciente_details.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def detalhes_grupo(request: HttpRequest, prontuario_grupo_numero: str):
+    """ Exibe informações referentes a um grupo de pacientes
+    """
     current_grupo = get_current_group(prontuario_grupo_numero)
     current_grupo_sessoes = [get_current_group_prontuario(prontuario_grupo_numero)]
     current_grupo_membros = get_pacientes_in_group(prontuario_grupo_numero)
@@ -699,8 +669,10 @@ def detalhes_grupo(request: HttpRequest, prontuario_grupo_numero: str):
     return render(request, 'grupo_detalhes.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def redirect_to_homepage(request):
+    """ Redireciona o usuário para homepage de acordo
+    com o Grupo ao qual pertence (administrativo/terapeutas)"""
     current_user = request.user
     terapeutas_group = get_terapeutas_group()
     administrativo_group = get_administrativo_group()
@@ -719,7 +691,7 @@ def render_religar_paciente_form(request, relig_form=None):
     return render(request, 'relig_pac.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def religar_paciente(request: HttpRequest, prontuario_numero: str):
     """ View para reativar um paciente previamente desligado
     """
@@ -766,7 +738,7 @@ def render_producao_mensal_form(request, producao_form=None):
     return render(request, 'gerar_producao.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @user_group_required(2)  # 2 = Administrativos group.id
 def producao_mensal(request: HttpRequest):
     """ View para gerar uma tabela das consultas realizadas
@@ -817,7 +789,7 @@ def render_historico_academico_form(request, terapeuta_codigo: str, historico_fo
     return render(request, 'historico_academico.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
     """ View para cadastrar historico academico de terapeutas
     """
@@ -830,8 +802,6 @@ def cadastro_historico_academico(request: HttpRequest, terapeuta_codigo: str):
     historico_form = HistoricoAcademicoForm(request.POST, request.FILES)
 
     if not historico_form.is_valid():
-        print(historico_form.errors)
-
         return render_historico_academico_form(request, terapeuta_codigo, historico_form)
 
     historico = historico_form.save(commit=False)
@@ -866,7 +836,7 @@ def render_terapeuta_media_form(request, terapeuta_codigo: str, terapeuta_media_
     return render(request, 'upload_terapeuta_media.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def terapeuta_media_upload(request, terapeuta_codigo: str):
     """View para upload de arquivos relacionados a Terapeutas
     """
@@ -879,8 +849,6 @@ def terapeuta_media_upload(request, terapeuta_codigo: str):
     terapeuta_media_form = TerapeutaMediaUploadForm(request.POST, request.FILES)
 
     if not terapeuta_media_form.is_valid():
-        print(terapeuta_media_form.errors)
-
         return render_terapeuta_media_form(request, terapeuta_codigo, terapeuta_media_form)
 
     terapeuta_media = terapeuta_media_form.save(commit=False)
@@ -911,7 +879,7 @@ def render_paciente_media_form(request, prontuario_numero: str, paciente_media_f
     return render(request, 'paciente_upload_media.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def paciente_media_upload(request, prontuario_numero: str):
     """View para upload de arquivos relacionados a Pacientes
     """
@@ -921,8 +889,6 @@ def paciente_media_upload(request, prontuario_numero: str):
     paciente_media_form = PacienteMediaUploadForm(request.POST, request.FILES)
 
     if not paciente_media_form.is_valid():
-        print(paciente_media_form.errors)
-
         return render_terapeuta_media_form(request, prontuario_numero, paciente_media_form)
 
     current_paciente = get_current_paciente(prontuario_numero)
@@ -941,25 +907,20 @@ def paciente_media_upload(request, prontuario_numero: str):
     return render(request, 'paciente_upload_media.html', context)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def view_certificado_curso(request, curso_id):
     """ View para visualizar Certificados
         de Histórico Acadêmico
     """
     pdf_file = get_object_or_404(HistoricoAcademico, pk=curso_id)
 
-    try:
-
-        with pdf_file.certificado_conclusao.open('rb') as pdf:
-            response = HttpResponse(pdf.read(), content_type='application/pdf')
-            response['Content-Disposition'] = 'inline; filename=' + pdf_file.certificado_conclusao.name
-            return response
-
-    except FileNotFoundError:
-        return HttpResponse('Arquivo não Encontrado', status=404)
+    with pdf_file.certificado_conclusao.open('rb') as pdf:
+        response = HttpResponse(pdf.read(), content_type='application/pdf')
+        response['Content-Disposition'] = 'inline; filename=' + pdf_file.certificado_conclusao.name
+        return response
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def view_terapeutas_pdf(request, media_id: int):
     """ View para visualizar PDFs relacionados
         a um terapeuta
@@ -973,7 +934,7 @@ def view_terapeutas_pdf(request, media_id: int):
         return response
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def view_paciente_pdf(request, media_id):
     """ View para visualização de PDFs
         relacionados aum paciente
@@ -987,7 +948,7 @@ def view_paciente_pdf(request, media_id):
         return response
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def view_paciente_images(request, media_id: int):
     """ View para visualização de imagens relacionadas
         a um paciente
@@ -1013,7 +974,7 @@ def view_paciente_images(request, media_id: int):
         return response
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def view_terapeuta_images(request, media_id: int):
     """ View para visualização de imagens relacionadas
         a um terapeuta
@@ -1039,7 +1000,7 @@ def view_terapeuta_images(request, media_id: int):
         return response
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 @permission_required('main.remove_pac_from_group', raise_exception=True)
 def remover_membro_grupo(request, prontuario_numero: str, prontuario_grupo_numero: str):
     """ View para remover pacientes

@@ -36,9 +36,7 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'main:homepage' %}">Inicio</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'account:logout' %}">Sair</a>
-                            </li>
+
                             <li class="nav-item">
                     <span class="nav-link">
                         {% now "j F Y" %}
@@ -56,6 +54,9 @@
                         {% endif %}
                     </span>
                 </li>
+                <li class="nav-item">
+                                <a class="nav-link" href="{% url 'accounts:logout' %}">Sair</a>
+                            </li>
                         </ul>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth.decorators import permission_required
 from .views import (cadastrar_paciente, add_entrada, index, list_entradas,
-                    cadastro_user_terapeuta, usuario_login, informacoes_terapeuta,
+                    cadastro_user_terapeuta, informacoes_terapeuta,
                     desligar_paciente, transferir_paciente, admin_interface, detalhes_grupo,
                     novo_convenio, detalhes_paciente, cadastrar_grupo, transferir_grupo, index_perfil,
                     add_entrada_sessao_grupo, add_pacientes_to_grupo, list_entradas_grupo, desligar_grupo,
@@ -66,8 +66,6 @@ urlpatterns = [
     path('dadospac/<str:prontuario_numero>/',
          detalhes_paciente,
          name='dadospac'),
-
-    path('login', usuario_login, name='login'),
 
     path('add-entrada-grupo/<str:prontuario_grupo_numero>/',
          permission_required('main.add_entry_group')(add_entrada_sessao_grupo),

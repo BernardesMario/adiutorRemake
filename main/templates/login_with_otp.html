@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -7,8 +9,8 @@
   <title> Adiutor Login </title>
   <link rel="canonical" href="https://codepen.io/banik/pen/dgQvWO">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="../static/normalize.min.css" rel="stylesheet">
-  <link href="../static/homeloginstyle.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'normalize.min.css' %}" >
+  <link rel="stylesheet" href="{% static 'homeloginstyle.css' %}" >
   <style>
     .btn-primary {
     background-color: transparent;
