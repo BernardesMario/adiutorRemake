@@ -24,4 +24,5 @@ class CustomUserChangeForm(UserChangeForm):
 
 class LoginWithOTPForm(forms.Form):
     # Unbound Form para validação the OTP
-    otp = forms.CharField(validators=[MinLengthValidator(limit_value=6), MaxLengthValidator(limit_value=6)])
+    otp = forms.CharField(validators=[MinLengthValidator(limit_value=6), MaxLengthValidator(limit_value=6)],
+                          label='Código de uso único')

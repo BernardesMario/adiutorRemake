@@ -28,7 +28,7 @@ urlpatterns = [
     path('verification/', include('verify_email.urls')),
     path('', homepage, name='homepage'),
     path('main/', include('main.urls')),
-    path('account/', include((accounts_urls, 'account'), namespace='account')),
+    path('accounts/', include((accounts_urls, 'accounts'), namespace='accounts')),
 
 ]
 

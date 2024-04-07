@@ -1,13 +1,9 @@
 
 # TODO:
-# view de listagem de consultas/mes
-# upload de imagens/arquivos - linkar com prontuário
 # pagamentos
 # verificar alteração de dados de usuários - permissão administrativa
 # definir ordering
 # Pacientes Inativos  Bloqueio de dados
-# Adicionar pacientes para grupos já existentes
 # Adicionar/Remover membros de grupos já existentes
-# Criar Permissões [ver prontuario grupo, delisgar grupo, transferir grupo]
 # * Validação de entrada dupla prontuario - complementar entrada já feita, não aceitar novas na mesma data
 # * Implementar variaveis de ambiente (os.environ) para Email Config em settings

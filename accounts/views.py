@@ -1,6 +1,10 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
+from django.http import HttpRequest
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, login as user_login
+from django.urls import reverse
+
 from main.services.terapeutas_services import get_terapeutas_group, get_administrativo_group
 from main.services.users_service import redirect_logged_user_to_home
 from rest_framework.views import APIView
@@ -61,13 +65,47 @@ class LoginWithOTP(APIView):
 
             return redirect_logged_user_to_home(user, terapeutas_group, administrativo_group)
 
-            # return Response({'success': 'Usuário autenticado com sucesso!'}, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Código de uso único inválido.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@login_required(login_url="/main/login")
+@login_required(login_url="/accounts/login")
 def logout_view(request):
     logout(request)
 
-    return redirect('main:login')
+    return redirect('accounts:login')
+
+
+def render_login_form(request: HttpRequest, login_form=None):
+    if not login_form:
+        login_form = AuthenticationForm()
+
+    context = {
+        'form': login_form
+    }
+    return render(request, 'login.html', context)
+
+
+def usuario_login(request: HttpRequest):
+    """ Login page
+    """
+    if request.method != 'POST':
+        return render_login_form(request)
+
+    login_form = AuthenticationForm(request, request.POST)
+
+    if not login_form.is_valid():
+        return render_login_form(request, login_form)
+
+    current_user = login_form.get_user()
+
+    if current_user.require_otp_login:
+        redirect_url = reverse('accounts:login-with-otp') + f'?email={current_user.email}'
+        return redirect(redirect_url)
+
+    user_login(request, current_user)
+
+    terapeutas_group = get_terapeutas_group()
+    administrativo_group = get_administrativo_group()
+
+    return redirect_logged_user_to_home(current_user, terapeutas_group, administrativo_group)
