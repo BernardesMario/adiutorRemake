@@ -1,5 +1,7 @@
 FROM python:3.12-bookworm
 ENV PYTHONUNBUFFERED 1
+ENV DJANGO_DEPLOYMENT_ENVIRONMENT="production"
+
 
 RUN mkdir /src
 WORKDIR /src
