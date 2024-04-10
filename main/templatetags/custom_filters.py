@@ -1,12 +1,14 @@
+from datetime import date
+from typing import Union
 from django import template
 
 register = template.Library()
 
 
-@register.filter
+@register.filter(name='format_phone_number')
 def format_phone_number(phone_number: str) -> str:
 
-    if not phone_number or len(phone_number) !=11:
+    if not phone_number or len(phone_number) != 11:
 
         return phone_number
 
@@ -15,7 +17,7 @@ def format_phone_number(phone_number: str) -> str:
     return formatted_number
 
 
-@register.filter
+@register.filter(name='format_cpf')
 def format_cpf(cpf_number: str) -> str:
 
     if not cpf_number or len(cpf_number) != 11:
@@ -25,3 +27,14 @@ def format_cpf(cpf_number: str) -> str:
     formatted_cpf = f"{cpf_number[:3]}.{cpf_number[3:6]}.{cpf_number[6:9]}.{cpf_number[9:]}"
 
     return formatted_cpf
+
+
+@register.filter(name='simplify_date')
+def simplify_date(value: date) -> Union[str, date]:
+
+    if not isinstance(value, date):
+        return value
+
+    simplified_date = value.strftime('%d/%m')
+
+    return simplified_date

@@ -39,7 +39,10 @@
 <p class="alert alert-success">
     Novo Terapeuta Cadastrado!<br>
     Por favor verifique o email para continuar! <br>
-        <a href="{% url 'main:administrativo' %}"> Voltar ao Inicio </a>
+        <a href="{% url 'main:administrativo' %}"> Voltar ao Inicio </a> <br>
+        <a href="{% url 'main:cadastrar_formacao' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Formação </a> /
+        <a href="{% url 'main:enviar_arquivo_terapeuta' terapeuta_codigo=terapeuta.conselho_codigo %}"> Adicionar Arquivo </a> <br>
+
 
 </p>
 {% else %}

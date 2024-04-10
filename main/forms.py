@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
-from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator
-from datetime import date
+from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator, MinValueValidator, \
+    MaxValueValidator
+from datetime import date, datetime
 import re
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, ProntuariosIndividuais, ProntuariosGrupos, validate_numbers, validate_letters,
@@ -94,7 +95,6 @@ class CadastroPacienteForm(forms.ModelForm):
     cidade = forms.CharField(validators=[validate_letters])
     cep_numero = forms.CharField(validators=[validate_numbers], label='CEP')
     cpf_responsavel_legal = forms.CharField(validators=[validate_numbers], label='CPF do Responsável')
-    convenio = forms.CharField(validators=[validate_letters], label='Convênio')
 
     class Meta:
         model = CadastroPacientes
@@ -248,7 +248,7 @@ class CadastrarConveniosForm(forms.ModelForm):
     endereco_rua = forms.CharField(validators=[validate_letters], label='Rua')
     endereco_bairro = forms.CharField(validators=[validate_letters], label='Bairro')
     cidade = forms.CharField(validators=[validate_letters])
-    responsavel_contato = forms.CharField(validators=[validate_letters], label='Contato do Responsável')
+    responsavel_contato = forms.CharField(validators=[validate_letters], label='Nome do Responsável')
 
     class Meta:
         model = ConveniosAceitos
@@ -508,7 +508,14 @@ class HistoricoAcademicoForm(forms.ModelForm):
                                             widget=forms.ClearableFileInput(attrs={'multiple': False,
                                                                                    'accept': 'application/pdf'})
                                             )
-    ano_conclusao = forms.IntegerField(label='Ano de Conclusão', validators=[validate_numbers])
+    # ano_conclusao = forms.IntegerField(label='Ano de Conclusão',
+    #                                    validators=[
+    #                                        validate_numbers, MinLengthValidator(limit_value=4),
+    #                                        MinValueValidator(limit_value=1900),
+    #                                        MaxValueValidator(limit_value=int(datetime.now().year))]
+    #                                    )
+
+    # verificar numero negativos
 
     class Meta:
         model = HistoricoAcademico
@@ -520,7 +527,7 @@ class HistoricoAcademicoForm(forms.ModelForm):
         if not certificado_year_validator(ano_conclusao):
             raise forms.ValidationError('Ano de Conclusão Inválido!')
 
-    def _raise_if_concluso_in_future(self):
+    def _raise_if_conclusao_in_future(self):
         ano_conclusao = self.cleaned_data.get('ano_conclusao')
         ano_atual = int(date.today().year)
 
@@ -530,7 +537,7 @@ class HistoricoAcademicoForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_conclusao_over_100_years()
-        self._raise_if_concluso_in_future()
+        self._raise_if_conclusao_in_future()
 
         return cleaned_data
 

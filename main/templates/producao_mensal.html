@@ -1,66 +1,93 @@
-
-
 {% extends 'middleman1.html' %}
 {% load bootstrap5 %}
-{% load static%}
+{% load static %}
+{% load custom_filters %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title> Produção </title>
 </head>
+<title> {% block title %}Produção {% endblock %} </title>
+ {% block head %}
+<style>
+
+    table {
+        border-collapse: collapse;
+    }
+
+    td {
+        padding: 8px;
+        border: 1px solid #dddddd;
+    }
+
+    td {
+        width: auto;
+    }
+
+    td.date-checkbox {
+    white-space: nowrap;
+    }
+
+    td.date-checkbox input[type="checkbox"] {
+    margin-right: 5px; /* Add some spacing between the date and checkbox */
+    }
+
+</style>
+{% endblock %}
 <body>
 
 <div class="page-container">
 
 {% block content %}
-<h1> Produção de  {{ terapeuta.nome }} </h1>
+<h1> Produção de {{ terapeuta.nome }} </h1>
 
-    <h2> Período: {{ data_inicial }} -
-        {% if data_final %}
-            {{ data_final }}
-        {% else %}
-            {% now "j F Y" %}
-        {% endif %} <br>
-         Total de atendimentos: {{ producao_count }}
-    </h2>
-    {% csrf_token %}
+<h2> Período: {{ data_inicial }} -
+    {% if data_final %}
+        {{ data_final }}
+    {% else %}
+        {% now "j F Y" %}
+    {% endif %} <br>
+     Total de atendimentos: {{ producao_count }}
+</h2>
+{% csrf_token %}
 
-    <table class="table">
-        <thead>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Convênio</th>
+            <th>Carteirinha</th>
+            <th>Data da Consulta </th>
+            <th>Enviado em</th>
+            <th>Total de Consultas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente, detalhes_paciente in atendimentos.items %}
             <tr>
-                <th>Nome</th>
-                <th>Convênio</th>
-                <th>Carteirinha</th>
-                <th>Data</th>
-                <th>Enviado em</th>
+                <td>{{ detalhes_paciente.consulta_paciente }}</td>
+                <td>{{ detalhes_paciente.consulta_convênio }}</td>
+                <td>{{ detalhes_paciente.convenio_identificador }}</td>
+                <td>
+                    {% for consulta in detalhes_paciente.consultas %}
+                      {{ consulta.consulta_data | simplify_date }} <input type="checkbox" name="verificado" value="{{ consulta.id }}"> <br>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for consulta in detalhes_paciente.consultas %}
+                        {{ consulta.entrada_data | simplify_date }} <br>
+                    {% endfor %}
+                </td>
+        <td>{{ detalhes_paciente.consultas|length }}</td>
             </tr>
-        </thead>
-        <tbody>
-            {% for paciente, detalhes_paciente in atendimentos.items %}
-                <tr>
-                    <td>{{ detalhes_paciente.consulta_paciente }}</td>
-                    <td>{{ detalhes_paciente.consulta_convênio }}</td>
-                    <td>{{ detalhes_paciente.convenio_identificador }}</td>
-                    <td>
-                        {% for consulta in detalhes_paciente.consultas %}
-                            {{ consulta.consulta_data }}<br>
-                        {% endfor %}
-                    </td>
-                    <td>
-                        {% for consulta in detalhes_paciente.consultas %}
-                            {{ consulta.entrada_data }}<br>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% empty %}
-                <tr>
-                    <td colspan="5"> Sem atendimentos para exibir!</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% empty %}
+            <tr>
+                <td colspan="6"> Sem atendimentos para exibir!</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}
 

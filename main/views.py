@@ -33,7 +33,8 @@ from .services.pacientes_services import (filter_inactive_pacientes_by_terapeuta
 from .services.terapeutas_services import (get_terapeutas_group, get_administrativo_group, get_current_user_terapeuta,
                                            associate_new_user_to_cadastro_profissional, get_terapeuta_by_codigo,
                                            producao_detalhamento, producao_generator, get_terapeuta_historico_academico,
-                                           get_current_terapeuta_image_media, get_current_terapeuta_pdf_media
+                                           get_current_terapeuta_image_media, get_current_terapeuta_pdf_media,
+                                           get_terapeuta_by_user
                                            )
 from .services.users_service import redirect_logged_user_to_home
 from .utils import get_selected_items, calculate_age
@@ -537,11 +538,13 @@ def cadastro_user_terapeuta(request: HttpRequest):
 
     if associate_success:
         inactive_user = send_verification_email(request, user_form)
+        terapeuta = get_terapeuta_by_user(new_user)
         sucesso = True
 
     context = {
         'user_form': user_form,
         'terapeuta_form': terapeuta_form,
+        'terapeuta': terapeuta,
         'sucesso': sucesso,
     }
 

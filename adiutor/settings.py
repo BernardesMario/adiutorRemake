@@ -130,8 +130,6 @@ USE_TZ = True
 
 STATIC_URL = 'static/' if DEBUG else '/src/staticfiles/'
 
-# STATIC_URL = 'static/' if DEBUG else '/src/static/'
-
 # STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 if not DEBUG:
     STATIC_ROOT = '/src/staticfiles/'

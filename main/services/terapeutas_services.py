@@ -135,3 +135,10 @@ def get_current_terapeuta_image_media(current_terapeuta: CadastroProfissionais) 
     terapeuta_image_media = ProfissionaisMedia.objects.filter(terapeuta=current_terapeuta).exclude(image_file='n/d')
 
     return terapeuta_image_media
+
+
+def get_terapeuta_by_user(user: CustomUser) -> CadastroProfissionais:
+
+    terapeuta = CadastroProfissionais.objects.get(usuario_codigo=user)
+
+    return terapeuta

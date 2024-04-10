@@ -3,7 +3,7 @@ import re
 from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, MinValueValidator, MaxValueValidator
 from accounts.models import CustomUser
 from datetime import date, datetime
 
@@ -359,7 +359,11 @@ class HistoricoAcademico(models.Model):
                                    validators=[validate_letters, MinLengthValidator(limit_value=4)])
 
     ano_conclusao = models.CharField(verbose_name='Ano de Conclusão', null=False, max_length=4,
-                                     validators=[validate_numbers, MinLengthValidator(limit_value=4)])
+                                     default=int(datetime.now().year),
+                                     validators=[
+                                         validate_numbers, MinLengthValidator(limit_value=4),
+                                         MinValueValidator(limit_value=1900),
+                                         MaxValueValidator(limit_value=int(datetime.now().year))])
 
     certificado_conclusao = models.FileField(upload_to=terapeutas_media_upload_path, blank=True, null=False,
                                              verbose_name='Certificado de Conclusão', help_text='Apenas arquivos PDF')
