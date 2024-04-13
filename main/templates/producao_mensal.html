@@ -8,29 +8,30 @@
 <head>
     <meta charset="UTF-8">
 </head>
-<title> {% block title %}Produção {% endblock %} </title>
+<title> {% block title %} Produção {% endblock %} </title>
  {% block head %}
 <style>
 
-    table {
+     table {
         border-collapse: collapse;
+        width: 100%;
     }
 
-    td {
+    td, th {
         padding: 8px;
         border: 1px solid #dddddd;
+        text-align: left;
+        vertical-align: top;
+        word-wrap: break-word;
     }
 
-    td {
-        width: auto;
+    td, th {
+        max-width: 200px;
     }
 
-    td.date-checkbox {
-    white-space: nowrap;
-    }
-
-    td.date-checkbox input[type="checkbox"] {
-    margin-right: 5px; /* Add some spacing between the date and checkbox */
+    td, th {
+        max-height: 100px;
+        overflow: hidden;
     }
 
 </style>
@@ -41,7 +42,15 @@
 
 {% block content %}
 <h1> Produção de {{ terapeuta.nome }} </h1>
+    <div class="d-flex justify-content-between align-items-baseline">
+        {% url 'main:producao-mensal' as base_url %}
+        {% with download_url=base_url|add:'?as_pdf=1' %}
+        <a href="{{ download_url }}?as_pdf=1" target="_blank">
+            <span class="material-icons fs-1">print</span>
+        </a>
+    {% endwith %}
 
+    </div>
 <h2> Período: {{ data_inicial }} -
     {% if data_final %}
         {{ data_final }}
@@ -89,8 +98,7 @@
     </tbody>
 </table>
 
-{% endblock %}
-
+    {% endblock %}
 </div>
 
 </body>

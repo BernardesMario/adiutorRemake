@@ -1,0 +1,113 @@
+{% load bootstrap5 %}
+{% load custom_filters %}
+{% load static %}
+
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
+<html lang="pt-br">
+<head>
+<title>Produção {{ terapeuta.nome }} </title>
+
+<style>
+    @page {
+        size: a4 portrait;
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            left: 50pt; width: 512pt; top: 50pt; height: 40pt;
+        }
+        @frame content_frame {          /* Content Frame */
+            left: 50pt; width: 512pt; top: 90pt; height: 632pt;
+        }
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
+
+    table {
+            border-collapse: collapse;
+            width: 100%;
+            page-break-inside: auto;
+        }
+
+    td, th {
+        padding: 8px;
+        border: 1px solid #dddddd;
+        text-align: center;
+        vertical-align: top;
+        max-width: 200px;
+        }
+</style>
+</head>
+
+<body>
+<div id="header_content"><strong>Produção de {{ terapeuta.nome }}</strong><br>Período: {{ data_inicial }} -
+    {% if data_final %}
+        {{ data_final }}
+    {% else %}
+        {% now "j F Y" %}
+    {% endif %} <br>
+     Total de atendimentos: {{ producao_count }}</div>
+
+    <div id="footer_content"> {% now "j F Y" %}
+        - page <pdf:pagenumber>
+        / <pdf:pagecount>
+    </div>
+
+<table class="table">
+    <thead>
+        <tr style="page-break-inside: auto;">
+            <th>Nome</th>
+            <th>Convênio</th>
+            <th>Carteirinha</th>
+            <th>Data da Consulta </th>
+            <th>Enviado em</th>
+            <th>Total de Consultas</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for paciente, detalhes_paciente in atendimentos.items %}
+            <tr style="page-break-inside: auto;">
+                <td>{{ detalhes_paciente.consulta_paciente }}</td>
+                <td>{{ detalhes_paciente.consulta_convênio }}</td>
+                <td>
+                    {% for chunk in detalhes_paciente.convenio_identificador|wordbreaker %}
+                        {{ chunk }} <br>
+                    {% endfor %}
+                <td>
+
+                    {% for consulta in detalhes_paciente.consultas %}
+                        {{ consulta.consulta_data | simplify_date }} [_]
+                        <br>
+                    {% endfor %}
+                </td>
+                <td>
+                    {% for consulta in detalhes_paciente.consultas %}
+                        {{ consulta.entrada_data | simplify_date }} <br>
+                    {% endfor %}
+                </td>
+                <td>
+                    {{ detalhes_paciente.consultas|length }}
+                </td>
+            </tr>
+
+        {% empty %}
+            <tr style="page-break-inside: auto;" >
+                <td colspan="6"> Sem atendimentos para exibir!</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>    <br>
+    <br>
+    _____________________________________________________________ <br>
+    {{ terapeuta.nome }} - CRP: {{ terapeuta.conselho_codigo }}   <br>
+    {% now "j F Y" %}
+</body>
+</html>

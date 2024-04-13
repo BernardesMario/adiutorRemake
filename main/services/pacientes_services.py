@@ -74,6 +74,7 @@ def registro_prontuario_when_pacientes_add_to_group(pacs_add: QuerySet, current_
 
     grupo_add = current_group
     data_grupo = date.today()
+    formatted_data_grupo = data_grupo.strftime("%d/%m/%Y")
 
     try:
         for paciente in pacs_add:
@@ -83,7 +84,7 @@ def registro_prontuario_when_pacientes_add_to_group(pacs_add: QuerySet, current_
                 autor=current_user_terapeuta,
                 data_consulta=data_grupo,
                 entrada=str(f"Paciente {paciente.nome}  foi adicionado ao grupo {current_group.label} "
-                            f" {grupo.prontuario_grupo_numero} por {current_user_terapeuta} em {data_grupo}.")
+                            f" {grupo.prontuario_grupo_numero} por {current_user_terapeuta} em {formatted_data_grupo}.")
             )
             entrada_prontuario_individual.save()
 
@@ -279,13 +280,15 @@ def desligamento_paciente_registro_prontuario_individual(current_user_terapeuta:
     """
     entrada_text = desligamento_form.cleaned_data.get('entrada_text')
     data_final = desligamento_form.cleaned_data.get('data_final')
+    formatted_data_final = data_final.strftime("%d/%m/%Y")
+
     try:
         ProntuariosIndividuais.objects.create(numero=current_pac,
                                               autor=current_user_terapeuta,
                                               data_consulta=data_final,
                                               entrada=f"Paciente {current_pac.nome} foi desligado por "
                                                       f"{current_user_terapeuta}"
-                                                      f" em {data_final}. "
+                                                      f" em {formatted_data_final}. "
                                                       f"\n Motivo: {entrada_text}", )
         return True
 
@@ -328,6 +331,8 @@ def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: Cadastr
 
     entrada_text = desligamento_form.cleaned_data.get('entrada_text')
     data_final = desligamento_form.cleaned_data.get('data_final')
+    formatted_data_final = data_final.strftime("%d/%m/%Y")
+
     try:
         for paciente in pacientes_grupo:
             ProntuariosIndividuais.objects.create(numero=paciente,
@@ -336,7 +341,7 @@ def registro_desligamento_grupos(pacientes_grupo: QuerySet, current_grp: Cadastr
                                                   entrada=f"Grupo {current_grp.label} "
                                                           f"prontuário {current_grp.prontuario_grupo_numero} "
                                                           f"foi desligado por {current_user_terapeuta} "
-                                                          f"em {data_final}."
+                                                          f"em {formatted_data_final}."
                                                           f"\n Motivo: {entrada_text}", )
         return True  # se necessário, retornar (pacientes_grupo)
 
@@ -366,12 +371,15 @@ def registro_prontuario_transferencia_paciente(current_pac: CadastroPacientes,
     entrada_text = transfer_form.cleaned_data.get('entrada_text')
     novo_terapeuta = transfer_form.cleaned_data['novo_terapeuta']
     data_transfer = date.today()
+    formatted_data_transfer = data_transfer.strftime("%d/%m/%Y")
+
     try:
         ProntuariosIndividuais.objects.create(numero=current_pac,
                                               autor=current_user_terapeuta,
                                               data_consulta=data_transfer,
                                               entrada=f"Paciente {current_pac.nome} foi transferido por "
-                                                      f"{current_user_terapeuta} para {novo_terapeuta} em {data_transfer}."
+                                                      f"{current_user_terapeuta} para {novo_terapeuta} em "
+                                                      f"{formatted_data_transfer}."
                                                       f"\n Motivo: {entrada_text}", )
         return True
 
@@ -485,6 +493,7 @@ def save_and_register_grupo_transfer(transfer_form: 'GrupoTrasferenciaForm',
     data_transfer = date.today()
     entrada_text = transfer_form.cleaned_data.get('entrada_text')
     novo_terapeuta = transfer_form.cleaned_data['novo_terapeuta']
+    formatted_data_transfer = data_transfer.strftime("%d/%m/%Y")
 
     try:
         current_grupo.terapeuta_responsavel = novo_terapeuta
@@ -496,7 +505,7 @@ def save_and_register_grupo_transfer(transfer_form: 'GrupoTrasferenciaForm',
                                          entrada=f"Grupo {current_grupo.label} "
                                                  f"prontuário {current_grupo.prontuario_grupo_numero} "
                                                  f"foi transferido por {current_user_terapeuta} "
-                                                 f"para {novo_terapeuta} em {data_transfer}."
+                                                 f"para {novo_terapeuta} em {formatted_data_transfer}."
                                                  f"\n Motivo: {entrada_text}")
 
         return True
@@ -512,6 +521,7 @@ def registro_prontuario_individual_transfer_grupo(transfer_form: 'GrupoTrasferen
 
     pacientes_grupo = get_pacientes_in_group(current_grupo.prontuario_grupo_numero)
     data_transfer = date.today()
+    formatted_data_transfer = data_transfer.strftime("%d/%m/%Y")
 
     entrada_text = transfer_form.cleaned_data.get('entrada_text')
     novo_terapeuta = transfer_form.cleaned_data['novo_terapeuta']
@@ -526,7 +536,7 @@ def registro_prontuario_individual_transfer_grupo(transfer_form: 'GrupoTrasferen
                                                   entrada=f"Grupo {current_grupo.label} "
                                                           f"prontuário {current_grupo.prontuario_grupo_numero} "
                                                           f"foi transferido por {current_user_terapeuta} "
-                                                          f"para {novo_terapeuta} em {data_transfer}."
+                                                          f"para {novo_terapeuta} em {formatted_data_transfer}."
                                                           f"\n Motivo: {entrada_text}")
 
         return True
@@ -558,6 +568,7 @@ def register_paciente_removido_from_grupo(current_user_terapeuta: CadastroProfis
 
     entrada_text = desligamento_form.cleaned_data.get('entrada_text')
     data_final = desligamento_form.cleaned_data.get('data_final')
+    formatted_data_final = data_final.strftime("%d/%m/%Y")
 
     try:
         ProntuariosIndividuais.objects.create(numero=current_paciente,
@@ -565,7 +576,7 @@ def register_paciente_removido_from_grupo(current_user_terapeuta: CadastroProfis
                                               data_consulta=data_final,
                                               entrada=f"Paciente {current_paciente.nome} foi desligado do grupo"
                                                       f"{current_grupo.label} por {current_user_terapeuta}"
-                                                      f" em {data_final}. "
+                                                      f" em {formatted_data_final}. "
                                                       f"\n Motivo: {entrada_text}", )
         return True
 

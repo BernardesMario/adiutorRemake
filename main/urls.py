@@ -113,6 +113,10 @@ urlpatterns = [
          producao_mensal,
          name='gerar-producao'),
 
+    # path('producao/render/',
+    #      render_producao,
+    #      name='render-producao'),
+
     path('enviar_arquivo_terapeuta/<str:terapeuta_codigo>/',
          terapeuta_media_upload,
          name='enviar_arquivo_terapeuta'),

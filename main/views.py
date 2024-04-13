@@ -1,3 +1,4 @@
+from django.template.loader import get_template
 from django.contrib.auth.decorators import permission_required, login_required
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
@@ -260,7 +261,6 @@ def add_entrada(request: HttpRequest, prontuario_numero: str):
 
 
 def render_add_entrada_prontuario_grupo(request: HttpRequest, prontuario_grupo_numero: str, entrada_form=None):
-
     pacientes_grupo = get_pacientes_in_group(prontuario_grupo_numero)
 
     if not entrada_form:
@@ -729,16 +729,26 @@ def handle_error(request):
 
 
 def render_producao_mensal_form(request, producao_form=None):
-    current_user_terapeuta = get_current_user_terapeuta(request)
-
     if not producao_form:
-        producao_form = GenerateProducaoForm(initial={'terapeuta': current_user_terapeuta})
+        producao_form = GenerateProducaoForm()
 
     context = {
         'form': producao_form
     }
 
     return render(request, 'gerar_producao.html', context)
+
+
+# def render_producao(request, context):
+#     """ View para renderizar a tabela dos atendimentos
+#     registrados de um terapeuta
+#     """
+#
+#     if request.GET.get('as_pdf'):
+#         template = 'prontuario_for_pdf.html'
+#         return render_to_pdf(template, context)
+#
+#     return render(request, 'producao_mensal.html', context)
 
 
 @login_required(login_url="/accounts/login")
@@ -762,10 +772,9 @@ def producao_mensal(request: HttpRequest):
 
     atendimentos_cadastrados = producao_generator(current_terapeuta, data_inicial, data_final)
 
-    producao_count = len(atendimentos_cadastrados)
-
     detalhamento_producao = producao_detalhamento(atendimentos_cadastrados)
 
+    producao_count = sum(len(paciente['consultas']) for paciente in detalhamento_producao.values())
     context = {
         'form': producao_form,
         'terapeuta': current_terapeuta,
@@ -775,7 +784,8 @@ def producao_mensal(request: HttpRequest):
         'data_final': data_final
     }
 
-    return render(request, 'producao_mensal.html', context)
+    template = 'producao_for_pdf.html'
+    return render_to_pdf(template, context)
 
 
 def render_historico_academico_form(request, terapeuta_codigo: str, historico_form=None):
@@ -1022,7 +1032,6 @@ def remover_membro_grupo(request, prontuario_numero: str, prontuario_grupo_numer
         return render_desligamento_form(request, prontuario_numero, desligamento_form)
 
     if not remover_paciente_from_grupo(current_terapeuta, current_paciente, current_grupo, desligamento_form):
-
         return redirect('main:handle-error')
 
     sucesso = True

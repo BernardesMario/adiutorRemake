@@ -2,14 +2,23 @@
 {% load static%}
 {% load custom_filters %}
 
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Prontuário </title>
 <style>
-
+    @page {
+        size: a4 portrait;
+        @frame header_frame {           /* Static Frame */
+            -pdf-frame-content: header_content;
+            left: 50pt; width: 512pt; top: 50pt; height: 40pt;
+        }
+        @frame content_frame {          /* Content Frame */
+            left: 50pt; width: 512pt; top: 90pt; height: 632pt;
+        }
+        @frame footer_frame {           /* Another static Frame */
+            -pdf-frame-content: footer_content;
+            left: 50pt; width: 512pt; top: 772pt; height: 20pt;
+        }
+    }
 
     body {
         margin: 0;
@@ -54,41 +63,32 @@
     .card-body {
         padding: 5px;
     }
-
-    .footer {
-        text-align: center;
-        background-color: #f5f5f5;
-        padding: 20px;
-        width: 100%;
-        position: fixed;
-        bottom: 0;
-    }
-
-    .custom-footer {
-        text-align: center;
-        background-color: #f5f5f5;
-        padding: 20px;
-        width: 100%;
-        position: absolute;
-        bottom: 0;
-        margin-top: auto;
-    }
-
 </style>
 </head>
+
 <body>
+    <!-- Content for Static Frame 'header_frame' -->
+    <div id="header_content"><h1>Prontuário de {{ paciente.nome }} - {{ paciente.prontuario_numero }}</h1></div>
+
+    <!-- Content for Static Frame 'footer_frame' -->
+    <div id="footer_content">LOCUS PSICODRAMA CRPJ 12/0082(c) {% now "j F Y" %} - page <pdf:pagenumber>
+        / <pdf:pagecount>
+    </div>
+
+    <!-- HTML Content -->
     <div class="container">
-        <div class="header">
-            <h1>Prontuário de {{ paciente.nome }} <strong> - </strong> {{ paciente.prontuario_numero }} </h1>
-        </div>
         <div>
             Paciente: {{ paciente.nome }} - {{ paciente.cpf_numero | format_cpf }} <br>
             Data de Nascimento: {{ paciente.nascimento }} <br>
             {% if paciente.responsavel_legal %}
             Responsável: {{ paciente.responsavel_legal }} - {{ paciente.cpf_responsavel_legal | format_cpf }} <br> {% endif %}
             Data de início: {{ paciente.data_inicio }} <br>
+            Data final:
             {% if paciente.data_final %}
-            Data final: {{ paciente.data_final }} <br> {% endif %}
+                {{ paciente.data_final }} <br>
+            {% else %}
+                em tratamento.
+            {% endif %}
         </div>
 
         <div class="prontuarios">
@@ -106,11 +106,5 @@
             {% endfor %}
         </div>
     </div>
- <div class="teste">
-    <footer class="custom-footer">
-        Rua Corália Ferreira da Luz, 15 - Centro - Florianópolis/SC - 88.020-650 - (48) 3222-1707 / 99668-0011 CRPJ 12/0082 <br>
-        www.locuspsicodrama.com.br E-mail: contato@locuspsicodrama.com.br
-    </footer>
- </div>
 </body>
 </html>
