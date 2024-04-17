@@ -36,13 +36,19 @@ def create_prontuario_numero():
 
 
 def validate_numbers(value):
-    if not re.match("^[0-9]+$", str(value)):
+    if value and not re.match("^[0-9]+$", str(value)):
         raise ValidationError("Este campo pode conter apenas números")
 
 
 def validate_letters(value):
-    if not re.match(r"^[^\d]+$", str(value)):
-        raise ValidationError("Este campo pode conter apenas letras")
+
+    if not value:
+        pass
+
+    for char in str(value):
+        if not re.match(r"^[A-Za-z\sáéíóúãõâêîôûàèìòùçÁÉÍÓÚÃÕÂÊÎÔÛÀÈÌÒÙÇ]+$", char, re.U):
+            raise ValidationError(
+                f"O caractere '{char}' não é permitido. Este campo pode conter apenas letras e espaços.")
 
 
 def validate_date_past(value):

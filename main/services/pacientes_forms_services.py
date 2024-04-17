@@ -47,7 +47,10 @@ def is_data_nova_consulta_individual_valid(numero: str, data_nova_consulta: date
 def ensure_paciente_convenio_carteirinha(convenio: ConveniosAceitos, carteirinha_convenio: str) -> bool:
     """ Garante que pacientes de convênios possuam o campo de numero da Carteirinha preenchido
     """
-    if convenio.nome != 'Particular' and not carteirinha_convenio:
+    particular_str = 'Particular'
+    convenio_nome_str = str(convenio.nome)
+
+    if convenio_nome_str != particular_str and not carteirinha_convenio:
         return False
 
     return True

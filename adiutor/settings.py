@@ -67,7 +67,10 @@ ROOT_URLCONF = 'adiutor.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'accounts', 'templates'),
+            os.path.join(BASE_DIR, 'main', 'templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -138,7 +141,6 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'adiutor', 'static'),
     os.path.join(BASE_DIR, 'main', 'static'),
     os.path.join(BASE_DIR, 'accounts', 'static'),
-
 ]
 
 # FILE_UPLOAD_HANDLERS = [
@@ -151,6 +153,12 @@ STATICFILES_DIRS = [
 # DEFAULT_FILE_STORAGE = [
 #     'django.core.files.storageFileSystemStorage'
 # ]
+
+
+# Django verify Email Template settings:
+HTML_MESSAGE_TEMPLATE = os.path.join(BASE_DIR, 'accounts', 'templates', 'email_verification_msg.html')
+VERIFICATION_SUCCESS_TEMPLATE = os.path.join(BASE_DIR, 'accounts', 'templates', 'email_verification_sucessful.html')
+VERIFICATION_FAILED_TEMPLATE = os.path.join(BASE_DIR, 'accounts', 'templates', 'email_verification_failed.html')
 
 # Email config for email verification/2SA
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -167,4 +175,4 @@ GITHUB_PAT = os.environ.get('GITHUB_PAT', '')
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-LOGIN_URL = 'main:login'
+LOGIN_URL = 'accounts:login'

@@ -1,9 +1,8 @@
 
-# TODO:
-# pagamentos
-# verificar alteração de dados de usuários - permissão administrativa
-# definir ordering
-# Pacientes Inativos  Bloqueio de dados
-# Adicionar/Remover membros de grupos já existentes
-# * Validação de entrada dupla prontuario - complementar entrada já feita, não aceitar novas na mesma data
-# * Implementar variaveis de ambiente (os.environ) para Email Config em settings
+# TODO nmr da carteirinha continua obrigatório mesmo para pacientes particulares [x]
+# TODO verificar obrigatoriaedade do email de pacientes [x]
+# TODO verificar numero do prontuario [->problema decorrido de numeração teste]
+# TODO verificar obrigatoriedade do CPF do responsavel [x]
+# TODO verificar template do email de confirmação [x]
+# TODO verificar URL do botão de verificação [x]
+# TODO verificar GRUPO dos usuários criados [x]

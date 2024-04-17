@@ -54,10 +54,12 @@ def add_user_to_terapeuta_group(new_user: CustomUser) -> bool:
 
 def associate_new_user_to_cadastro_profissional(new_user: CustomUser, terapeuta_form) -> bool:
     terapeuta = terapeuta_form.save(commit=False)
+    terapeuta_group = get_terapeutas_group()
     try:
         terapeuta.usuario_codigo_id = new_user.id
         terapeuta.email = new_user.email
         terapeuta.telefone_numero = new_user.phone_number
+        new_user.groups.add(terapeuta_group)
         terapeuta.save()
         return True
 

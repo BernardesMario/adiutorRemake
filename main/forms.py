@@ -94,7 +94,7 @@ class CadastroPacienteForm(forms.ModelForm):
     endereco_bairro = forms.CharField(validators=[validate_letters], label='Bairro')
     cidade = forms.CharField(validators=[validate_letters])
     cep_numero = forms.CharField(validators=[validate_numbers], label='CEP')
-    cpf_responsavel_legal = forms.CharField(validators=[validate_numbers], label='CPF do Responsável')
+    cpf_responsavel_legal = forms.CharField(validators=[validate_numbers], label='CPF do Responsável', required=False)
 
     class Meta:
         model = CadastroPacientes
