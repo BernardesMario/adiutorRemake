@@ -55,6 +55,7 @@ def render_cadastro_paciente_form(request: HttpRequest, cadastro_form=None):
 def cadastrar_paciente(request: HttpRequest):
     """View para cadastramento de pacientes
     """
+    print("cadastrar paciente")
     if request.method != 'POST':
         return render_cadastro_paciente_form(request)
 
@@ -902,7 +903,7 @@ def paciente_media_upload(request, prontuario_numero: str):
     paciente_media_form = PacienteMediaUploadForm(request.POST, request.FILES)
 
     if not paciente_media_form.is_valid():
-        return render_terapeuta_media_form(request, prontuario_numero, paciente_media_form)
+        return render_paciente_media_form(request, prontuario_numero, paciente_media_form)
 
     current_paciente = get_current_paciente(prontuario_numero)
 

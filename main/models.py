@@ -15,6 +15,7 @@ def create_prontuario_numero():
     """
 
     last_paciente = CadastroPacientes.objects.order_by('-prontuario_numero').first()
+
     last_prontuario_numero = last_paciente.prontuario_numero
 
     last_prontuario_numero_identificador = last_prontuario_numero[-5:]
@@ -31,7 +32,10 @@ def create_prontuario_numero():
     prontuario_inicio = ano_str[2:]
 
     novo_prontuario_numero = prontuario_inicio + novo_prontuario_numero_identificador_str
+    if not last_paciente:
+        novo_prontuario_numero = prontuario_inicio + '00001'
 
+        return str(novo_prontuario_numero)
     return novo_prontuario_numero
 
 
@@ -41,7 +45,6 @@ def validate_numbers(value):
 
 
 def validate_letters(value):
-
     if not value:
         pass
 

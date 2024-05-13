@@ -59,7 +59,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    'main.middlewares.error_handling_middleware.ErrorHandlingMiddleware'
+    'main.middlewares.error_handling_middleware.ErrorHandlingMiddleware',
+
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'adiutor.urls'
@@ -127,15 +129,13 @@ USE_I18N = True
 
 USE_TZ = True
 
-
+DEBUG = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/' if DEBUG else '/src/staticfiles/'
 
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-if not DEBUG:
-    STATIC_ROOT = '/src/staticfiles/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') if DEBUG else '/src/staticfiles/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'adiutor', 'static'),
