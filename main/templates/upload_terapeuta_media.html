@@ -18,7 +18,7 @@
             {% if sucesso %}
                 <p class="alert alert-success">
                     Adicionado com Sucesso! <br>
-                    <a href="{% url 'main:administrativo' %}"> Voltar ao Inicio </a> <br>
+                    <a href="{% url 'main:homepage' %}"> Voltar ao Inicio </a> <br>
                     <a href="{% url 'main:cadastrar_formacao' terapeuta_codigo=terapeuta.conselho_codigo %}"> Cadastrar novo curso </a>
                 </p>
             {% else %}

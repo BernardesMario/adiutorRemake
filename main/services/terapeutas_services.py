@@ -105,8 +105,8 @@ def producao_detalhamento(producao: QuerySet) -> dict:
                 'convenio_identificador': current_paciente.carteirinha_convenio,
                 'consultas': [consulta_dict]
             }
-
-        results_dict[current_paciente.nome]['consultas'].append(consulta_dict)
+        else:
+            results_dict[current_paciente.nome]['consultas'].append(consulta_dict)
 
     return results_dict
 

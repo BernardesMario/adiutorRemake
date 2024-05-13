@@ -1,10 +1,12 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
-from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator, MinValueValidator, \
-    MaxValueValidator
-from datetime import date, datetime
+from django.core.validators import MinLengthValidator, MaxLengthValidator, FileExtensionValidator
+from datetime import date
 import re
+
+from django.forms import CheckboxSelectMultiple
+
 from .models import (CadastroGrupos, CadastroProfissionais, CadastroPacientes,
                      ConveniosAceitos, ProntuariosIndividuais, ProntuariosGrupos, validate_numbers, validate_letters,
                      HistoricoAcademico, ProfissionaisMedia, PacientesMedia)
@@ -13,7 +15,8 @@ from .services.pacientes_services import (is_data_nova_consulta_group_valid)
 from .services.pacientes_forms_services import (is_paciente_menor_acompanhado,
                                                 cpf_responsavel_required_when_responsavel,
                                                 is_data_nova_consulta_individual_valid,
-                                                ensure_paciente_convenio_carteirinha)
+                                                ensure_paciente_convenio_carteirinha,
+                                                validate_responsavel_nome_if_responsavel)
 from .utils import (is_date_not_future, certificado_year_validator, calculate_age, is_image_file_extension_valid,
                     media_form_ensure_file)
 
@@ -69,25 +72,10 @@ class CadastroProfissionaisForm(forms.ModelForm):
 
 
 class CadastroPacienteForm(forms.ModelForm):
-
-    def clean_responsavel(self):
-        """Função clean para validação de caracteres do campo responsavel_legal
-        """
-        cleaned_data = super().clean()
-        responsavel = cleaned_data.get('responsavel_legal')
-
-        def validate_name(value: str):
-            if not re.match(r"^[^\d]+$", str(value)):
-                raise forms.ValidationError("Este campo pode conter apenas letras")
-
-        if responsavel:
-            validate_name(responsavel)
-        else:
-            pass
-
     nome = forms.CharField(validators=[validate_letters])
     cpf_numero = forms.CharField(validators=[validate_numbers], label='CPF')
-    carteirinha_convenio = forms.CharField(validators=[validate_numbers], label='Nº Carteirinha do Convênio')
+    carteirinha_convenio = forms.CharField(validators=[validate_numbers], label='Nº Carteirinha do Convênio',
+                                           required=False)
     telefone_numero = forms.CharField(validators=[validate_numbers], label='Telefone')
     endereco_numero = forms.CharField(validators=[validate_numbers], label='Nº')
     endereco_rua = forms.CharField(validators=[validate_letters], label='Endereço')
@@ -152,6 +140,12 @@ class CadastroPacienteForm(forms.ModelForm):
         if not ensure_paciente_convenio_carteirinha(convenio, carteirinha_convenio):
             raise forms.ValidationError('Campo "Carteirinha Conveio" Obrigatório para pacientes de Planos de Saude!')
 
+    def _raise_if_responsavel_name_invalid(self):
+        responsavel_name = self.cleaned_data.get('responsavel_legal')
+
+        if not validate_responsavel_nome_if_responsavel(responsavel_name):
+            raise forms.ValidationError('Este campo pode conter apenas letras!!')
+
     def clean(self):
         cleaned_data = super().clean()
         self._raise_if_menor_desacompanhado()
@@ -160,6 +154,7 @@ class CadastroPacienteForm(forms.ModelForm):
         self._raise_if_acompanhante_sem_cpf()
         self._raise_if_paciente_menor_idade_minina()
         self._raise_if_paciente_convenio_sem_carteirinha()
+        self._raise_if_responsavel_name_invalid()
         return cleaned_data
 
 
@@ -205,9 +200,10 @@ class CadastroPacienteNovoForm(forms.ModelForm):
 
 class CadastroGrupoForm(forms.ModelForm):
     prontuario_grupo_numero = forms.CharField(validators=[validate_numbers], label='Nº Prontuário')
-    terapeuta_auxiliar = forms.ModelChoiceField(
+    terapeuta_auxiliar = forms.ModelMultipleChoiceField (
         queryset=CadastroProfissionais.objects.all(),
         label='Ego Auxiliar',
+        widget=CheckboxSelectMultiple,
     )
 
     class Meta:
@@ -222,11 +218,11 @@ class CadastroGrupoForm(forms.ModelForm):
         }
 
     def _raise_if_terapeuta_responsavel_igual_auxiliar(self):
-        terapeuta_principal = self.cleaned_data.get['terapeuta_responsavel']
-        terapeuta_auxiliar = self.cleaned_data.get['terapeuta_auxiliar']
+        terapeuta_principal = self.cleaned_data.get('terapeuta_responsavel')
+        terapeuta_auxiliar = self.cleaned_data.get('terapeuta_auxiliar')
 
-        if not terapeuta_principal != terapeuta_auxiliar:
-            raise forms.ValidationError(" Terapeuta responsável não pode ser igual ao Ego Auxiliar")
+        if terapeuta_principal == terapeuta_auxiliar:
+            raise forms.ValidationError("Terapeuta responsável não pode ser igual ao Ego Auxiliar")
 
     def clean(self):
         cleaned_data = super().clean()

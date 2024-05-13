@@ -1,6 +1,6 @@
+import re
 from datetime import date
 from typing import Union
-
 from main.models import ConveniosAceitos
 from main.services.pacientes_services import get_ultima_entrada_prontuarios_paciente_individual
 from main.utils import calculate_age
@@ -51,6 +51,13 @@ def ensure_paciente_convenio_carteirinha(convenio: ConveniosAceitos, carteirinha
     convenio_nome_str = str(convenio.nome)
 
     if convenio_nome_str != particular_str and not carteirinha_convenio:
+        return False
+
+    return True
+
+
+def validate_responsavel_nome_if_responsavel(responsavel_name: Union[str, None]):
+    if responsavel_name and not re.match(r"^[A-Za-z\sáéíóúãõâêîôûàèìòùçÁÉÍÓÚÃÕÂÊÎÔÛÀÈÌÒÙÇ]+$", responsavel_name, re.U):
         return False
 
     return True
