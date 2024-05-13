@@ -1,4 +1,13 @@
 {% load static %}
+{# Load the tag library #}
+{% load django_bootstrap5 %}
+
+{# Load CSS and JavaScript #}
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+{# Display django.contrib.messages as Bootstrap alerts #}
+{% bootstrap_messages %}
 
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -9,8 +18,13 @@
   <title> Adiutor Login </title>
   <link rel="canonical" href="https://codepen.io/banik/pen/dgQvWO">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="{% static 'normalize.min.css' %}" >
-  <link rel="stylesheet" href="{% static 'homeloginstyle.css' %}" >
+<!--  <link href="../static/normalize.min.css" rel="stylesheet">-->
+<!--  <link href="{% static 'normalize.min.css' %}" rel="stylesheet">-->
+  <link rel="stylesheet" type="text/css" href="{% static 'normalize.min.css' %}">
+
+<!--  <link href="../static/homeloginstyle.css" rel="stylesheet">-->
+<!--  <link href="{% static 'homeloginstyle.css' %}" rel="stylesheet">-->
+  <link rel="stylesheet" type="text/css" href="{% static 'homeloginstyle.css' %}">
   <style>
     .btn-primary {
     background-color: transparent;
