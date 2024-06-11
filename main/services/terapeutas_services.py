@@ -9,9 +9,8 @@ from django.db.models.query import QuerySet
 
 
 def get_terapeutas_group() -> Group:
-    terapeutas_group_id = 1  # Conferir ID
 
-    terapeutas_group = Group.objects.get(id=terapeutas_group_id)
+    terapeutas_group = Group.objects.get(name='Terapeutas')
 
     return terapeutas_group
 

@@ -23,10 +23,10 @@ MEDIA_URL = '/media/'
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-wnu8bm85jy2a3k(n7(fg9utdqf4#higzy*!5l*9y%2l-tm6$$t'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-default-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', default=True)
+DEBUG = os.environ.get('DEBUG', default=False)
 
 ALLOWED_HOSTS = ['*']
 
@@ -129,7 +129,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-DEBUG = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
@@ -166,7 +165,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'adiutor.noreply@gmail.com')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'vrcnlsutlezbbljm')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'default_gmail_password')
 
 # GITHUB
 GITHUB_PAT = os.environ.get('GITHUB_PAT', '')

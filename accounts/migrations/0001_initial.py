@@ -4,6 +4,13 @@ import django.contrib.auth.models
 import django.contrib.auth.validators
 from django.db import migrations, models
 import django.utils.timezone
+import django.contrib.auth.validators
+
+
+def create_groups(apps, schema_editor):
+    Group = apps.get_model('auth', 'Group')
+    Group.objects.create(name='Terapeutas')
+    Group.objects.create(name='Administrativo')
 
 
 class Migration(migrations.Migration):
@@ -43,4 +50,6 @@ class Migration(migrations.Migration):
                 ('objects', django.contrib.auth.models.UserManager()),
             ],
         ),
+
+        migrations.RunPython(create_groups),
     ]
