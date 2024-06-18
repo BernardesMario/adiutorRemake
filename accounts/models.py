@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
     phone_number = models.CharField(max_length=11, unique=True, verbose_name='Telefone', validators=[
         validate_numbers, MinLengthValidator(limit_value=11), MaxLengthValidator(limit_value=11)
     ])
-    require_otp_login = models.BooleanField(null=False, default=True)  # TODO trocar pra False
+    require_otp_login = models.BooleanField(null=False, default=False)
     otp = models.CharField(max_length=6, null=True, blank=True)
 
     def __str__(self):

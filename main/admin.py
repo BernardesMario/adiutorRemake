@@ -9,6 +9,7 @@ class CadastroPacientesAdmin(admin.ModelAdmin):
     search_fields = ['nome', 'prontuario_numero', 'data_inicio', 'terapeuta']
     list_filter = ['terapeuta', 'desligado']
 
+
 @admin.register(ProntuariosIndividuais)
 class ProntuarioIndividuaisAdmin(admin.ModelAdmin):
     list_display = ['numero', 'autor', 'data_consulta', 'data_entrada']

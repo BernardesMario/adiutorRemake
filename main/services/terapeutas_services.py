@@ -58,6 +58,7 @@ def associate_new_user_to_cadastro_profissional(new_user: CustomUser, terapeuta_
         terapeuta.usuario_codigo_id = new_user.id
         terapeuta.email = new_user.email
         terapeuta.telefone_numero = new_user.phone_number
+        new_user.require_otp_login = True
         new_user.groups.add(terapeuta_group)
         terapeuta.save()
         return True

@@ -24,7 +24,7 @@ from accounts.urls import urlpatterns as accounts_urls
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls, name='admin'),
     path('verification/', include('verify_email.urls')),
     path('', homepage, name='homepage'),
     path('main/', include('main.urls')),
